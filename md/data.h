@@ -3,17 +3,17 @@
 
 // particle data type (with pointers to next and previous for linked list)
 struct particle_t {
-	double x, y; // position within cell
-	double ax, ay; // acceleration
-	double vx, vy; // velocity
-	struct particle_t * next;
-	struct particle_t * prev;
-	int part_id;
+	double * x, * y; // position within cell
+	double * ax, * ay; // acceleration
+	double * vx, * vy; // velocity
+	int * part_id;
 };
 
 // list for a cell, with a head
 struct cell_list {
-	struct particle_t * head;
+	int count;
+	int start;
+	int cell_id;
 };
 
 // parameters for end time, cut off, cell size, grid size and number of particles

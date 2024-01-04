@@ -47,11 +47,23 @@ void problem_setup() {
 	cells = alloc_2d_cell_list_array(x+2, y+2);
 	num_particles = x * y * num_part_per_dim * num_part_per_dim;
 
+	struct particle_t p;
+
+	p.x = malloc(sizeof(double) * num_particles);
+	p.y = malloc(sizeof(double) * num_particles);
+	p.ax = malloc(sizeof(double) * num_particles);
+	p.ay = malloc(sizeof(double) * num_particles);
+	p.vx = malloc(sizeof(double) * num_particles);
+	p.vy = malloc(sizeof(double) * num_particles);
+	p.part_id = malloc(sizeof(double) * num_particles);
+
 	double v_sum_x = 0.0;
 	double v_sum_y = 0.0;
 
 	// set the normalisation magnitude using the ideal gas law (T = mv^2 / 3)
 	double v_magnitude = sqrt(3.0 * init_temp);
+
+	int p_count = 0;
 
 	for (int i = 1; i < x+1; i++) {
 		for (int j = 1; j < y+1; j++) {
@@ -68,15 +80,16 @@ void problem_setup() {
 					double rand_vy = sin(phi);
 
 					// create the particle and add it to the current cell list.			
-					struct particle_t * p = malloc(sizeof(struct particle_t));
-					p->x = part_x * cell_size;
-					p->y = part_y * cell_size;
-					p->vx = rand_vx * v_magnitude;
-					p->vy = rand_vy * v_magnitude;
-					add_particle(&(cells[i][j]), p);
+					p.x[p_count] = part_x * cell_size;
+					p.y[p_count] = part_y * cell_size;
+					p.vx[p_count] = rand_vx * v_magnitude;
+					p.vy[p_count] = rand_vy * v_magnitude;
+					add_particle(&(cells[i][j]), &p);
 
-					v_sum_x += p->vx;
-					v_sum_y += p->vy;
+					v_sum_x += p.vx[p_count];
+					v_sum_y += p.vy[p_count];
+
+					p_count++;
 				}
 			}	
 		}
@@ -86,14 +99,7 @@ void problem_setup() {
 	double v_avg_x = v_sum_x / num_particles;
 	double v_avg_y = v_sum_y / num_particles;
 
-	for (int i = 1; i < x+1; i++) {
-		for (int j = 1; j < y+1; j++) {
-			struct particle_t * p = cells[i][j].head;
-			while (p != NULL) {
-				p->vx -= v_avg_x;
-				p->vy -= v_avg_y;
-				p = p->next;
-			}
-		}
-	}
+	for (int i = 0; i < num_particles; i++) {
+		p.vx[i] -= v_avg_x;
+		p.vy[i] -= v_avg_y;
 }
