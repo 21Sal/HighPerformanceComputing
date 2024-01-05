@@ -53,8 +53,8 @@ struct particle_t particles;
  * @param particle The particle
  */
 void add_particle(struct cell_list * cell, int part_id) {
-	cell->count++; 
 	cell->part_ids[cell->count] = part_id;
+	cell->count++; 
 }
 
 /**
@@ -65,7 +65,6 @@ void add_particle(struct cell_list * cell, int part_id) {
  */
 void remove_particle(struct cell_list * cell, int part_id) {
 	cell->count--;
-	cell->part_ids[cell->count] = part_id;
 }
 
 /**

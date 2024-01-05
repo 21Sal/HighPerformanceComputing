@@ -86,19 +86,14 @@ double comp_accel() {
  */
 void move_particles() {
 	// move all particles half a time step
-	for (int i = 1; i < x+1; i++) {
-		for (int j = 1; j < y+1; j++) {
-			for (int k = 0; k < cells[i][j].count; k++) {
-				int p = cells[i][j].part_ids[k];
-				// update velocity to obtain v(t + Dt/2)
-				particles.vx[p] += dth * particles.ax[p];
-				particles.vy[p] += dth * particles.ay[p];
+	for (int p = 0; p < num_particles; p++) {
+		// update velocity to obtain v(t + Dt/2)
+		particles.vx[p] += dth * particles.ax[p];
+		particles.vy[p] += dth * particles.ay[p];
 
-				// update particle coordinates to p(t + Dt) (scaled to the cell_size)
-				particles.x[p] += (dt * particles.vx[p]);
-				particles.y[p] += (dt * particles.vy[p]);
-			}
-		}
+		// update particle coordinates to p(t + Dt) (scaled to the cell_size)
+		particles.x[p] += (dt * particles.vx[p]);
+		particles.y[p] += (dt * particles.vy[p]);
 	}
 }
 
@@ -162,18 +157,13 @@ void update_cells() {
 double update_velocity() {
 	double kinetic_energy = 0.0;
 
-	for (int i = 1; i < x+1; i++) {
-		for (int j = 1; j < y+1; j++) {
-			for (int k = 0; k < cells[i][j].count; k++) {
-				int p = cells[i][j].part_ids[k];
-				// update velocity again by half time to obtain v(t + Dt)
-				particles.vx[p] += dth * particles.ax[p];
-				particles.vy[p] += dth * particles.ay[p];
+	for (int p = 0; p < num_particles; p++) {
+		// update velocity again by half time to obtain v(t + Dt)
+		particles.vx[p] += dth * particles.ax[p];
+		particles.vy[p] += dth * particles.ay[p];
 
-				// calculate the kinetic energy by adding up the squares of the velocities in each dim
-				kinetic_energy += (particles.vx[p] * particles.vx[p]) + (particles.vy[p] * particles.vy[p]);
-			}
-		}
+		// calculate the kinetic energy by adding up the squares of the velocities in each dim
+		kinetic_energy += (particles.vx[p] * particles.vx[p]) + (particles.vy[p] * particles.vy[p]);
 	}
 
 	// KE = (1/2)mv^2

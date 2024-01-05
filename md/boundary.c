@@ -13,11 +13,17 @@ void apply_boundary() {
 	// Apply boundary conditions
 	for (int j = 1; j < y+1; j++) {
 		cells[0][j].part_ids = cells[x][j].part_ids;
+		cells[0][j].count = cells[x][j].count;
+
 		cells[x+1][j].part_ids = cells[1][j].part_ids;
+		cells[x+1][j].count = cells[1][j].count;
 	}
 
 	for (int i = 0; i < x+2; i++) {
 		cells[i][0].part_ids = cells[i][y].part_ids;
+		cells[i][0].count = cells[i][y].count;
+
 		cells[i][y+1].part_ids = cells[i][1].part_ids;
+		cells[i][y+1].count = cells[i][1].count;
 	}
 }
