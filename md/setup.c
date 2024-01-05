@@ -53,7 +53,7 @@ void problem_setup() {
 	particles.ay = malloc(sizeof(double) * num_particles);
 	particles.vx = malloc(sizeof(double) * num_particles);
 	particles.vy = malloc(sizeof(double) * num_particles);
-	particles.part_id = malloc(sizeof(double) * num_particles);
+	particles.part_id = malloc(sizeof(int) * num_particles);
 
 	double v_sum_x = 0.0;
 	double v_sum_y = 0.0;
@@ -82,7 +82,8 @@ void problem_setup() {
 					particles.y[p_count] = part_y * cell_size;
 					particles.vx[p_count] = rand_vx * v_magnitude;
 					particles.vy[p_count] = rand_vy * v_magnitude;
-					add_particle(&(cells[i][j]), particles.part_id[p_count]);
+					particles.part_id[p_count] = p_count;
+					add_particle(&(cells[i][j]), p_count);
 
 					v_sum_x += particles.vx[p_count];
 					v_sum_y += particles.vy[p_count];
