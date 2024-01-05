@@ -65,6 +65,7 @@ void problem_setup() {
 
 	for (int i = 1; i < x+1; i++) {
 		for (int j = 1; j < y+1; j++) {
+			cells[i][j].part_ids = malloc(sizeof(double) * num_particles);
 			for (int a = 0; a < num_part_per_dim; a++) {
 				for (int b = 0; b < num_part_per_dim; b++) {
 					// set the particles x and y values within the current cell (on a lattice based on number of particles per cell, per dimension)
