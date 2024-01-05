@@ -13,7 +13,7 @@ struct particle_t {
 struct cell_list {
 	int count;
 	int start;
-	int cell_id;
+	int * part_ids;
 };
 
 // parameters for end time, cut off, cell size, grid size and number of particles
@@ -47,9 +47,11 @@ extern int num_part_per_dim;
 
 // the cell list
 extern struct cell_list ** cells;
+extern struct particle_t particles;
 
-void add_particle(struct cell_list * list, struct particle_t * particle);
-void remove_particle(struct cell_list * list, struct particle_t * particle);
+
+void add_particle(struct cell_list * list, int part_id);
+void remove_particle(struct cell_list * list, int part_id);
 struct cell_list ** alloc_2d_cell_list_array(int m, int n);
 void free_2d_array(void ** array);
 

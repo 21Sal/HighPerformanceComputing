@@ -92,12 +92,11 @@ int write_vtk(char * filename, int iters, double t) {
 	fprintf(f, "<DataArray type=\"Float64\" Name=\"particles\" NumberOfComponents=\"3\" format=\"ascii\">\n");
 	for (int i = 1; i < x+1; i++) {
 		for (int j = 1; j < y+1; j++) {
-			struct particle_t * p = cells[i][j].head;
-			while (p != NULL) {
-				double p_real_x = ((i-1) * cell_size) + p->x;
-				double p_real_y = ((j-1) * cell_size) + p->y;
+			for (int k = 0; k < cells[i][j].count; k++) {
+				int p = cells[i][j].part_ids[k];
+				double p_real_x = ((i-1) * cell_size) + particles.x[p];
+				double p_real_y = ((j-1) * cell_size) + particles.y[p];
 				fprintf(f, "%.12e %.12e 0 \n", p_real_x, p_real_y);
-				p = p->next;
 			}
 		}
 	}

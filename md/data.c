@@ -44,7 +44,7 @@ int num_part_per_dim = 2;
 // the cell list
 struct cell_list ** cells;
 
-struct particle_t p;
+struct particle_t particles;
 
 /**
  * @brief Add a particle to a particular cell list
@@ -52,8 +52,9 @@ struct particle_t p;
  * @param list The cell list to add the particle to
  * @param particle The particle
  */
-void add_particle(struct cell_list * cell, struct particle_t * particle) {
-	cell->count++;
+void add_particle(struct cell_list * cell, int part_id) {
+	cell->count++; 
+	cell->part_ids[cell->count] = part_id;
 }
 
 /**
@@ -62,8 +63,9 @@ void add_particle(struct cell_list * cell, struct particle_t * particle) {
  * @param list The cell list to remove the particle from
  * @param particle The particle
  */
-void remove_particle(struct cell_list * cell, struct particle_t * particle) {
+void remove_particle(struct cell_list * cell, int part_id) {
 	cell->count--;
+	cell->part_ids[cell->count] = part_id;
 }
 
 /**
