@@ -16,6 +16,8 @@ struct cell_list {
 	int * part_ids;
 };
 
+extern double growth_factor;
+
 // parameters for end time, cut off, cell size, grid size and number of particles
 extern double t_end;
 extern double r_cut_off;

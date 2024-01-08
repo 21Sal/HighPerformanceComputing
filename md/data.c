@@ -5,6 +5,8 @@
 
 #include "data.h"
 
+double growth_factor = 1.5;
+
 // parameters for end time, cut off, cell size, grid size and number of particles
 double t_end = 0.5;
 double r_cut_off = 2.5;
@@ -54,7 +56,7 @@ struct particle_t particles;
  */
 void add_particle(struct cell_list * cell, int part_id) {
 	if (cell->count == cell->size) {
-		cell->size *= 1.5;
+		cell->size *= growth_factor;
 		int * tmp = realloc(cell->part_ids, sizeof(int) * cell->size);
 		if (!tmp) {
 			fprintf(stderr, "realloc failed\n");
