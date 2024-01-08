@@ -53,16 +53,6 @@ struct particle_t particles;
  * @param particle The particle
  */
 void add_particle(struct cell_list * cell, int part_id) {
-	if (cell->count == cell->size) {
-		cell->size *= 1.5;
-		int * tmp = realloc(cell->part_ids, sizeof(int) * cell->size);
-		if (!tmp) {
-			fprintf(stderr, "realloc failed\n");
-			exit(2);
-		} else {
-			cell->part_ids = tmp;
-		}
-	}
 	cell->part_ids[cell->count] = part_id;
 	cell->count++; 
 }

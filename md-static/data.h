@@ -12,7 +12,6 @@ struct particle_t {
 // list for a cell, with a head
 struct cell_list {
 	int count;
-	int size;
 	int * part_ids;
 };
 
