@@ -34,7 +34,7 @@ double comp_accel() {
 					for (int b = -1; b <= 1; b++) {
 						for (int l = 0; l < cells[i+a][j+b].count; l++) {
 							int q = cells[i+a][j+b].part_ids[l];
-							if (p == q) {
+							if (p >= q) {
 								continue;
 							}
 
@@ -60,9 +60,13 @@ double comp_accel() {
 								double f = (48.0 * r_2_inv * r_6_inv * (r_6_inv - 0.5));
 
 								particles.ax[p] += f*dx;
-								particles.ay[p] += f*dy;
+								particles.ax[q] -= f*dx;
 
-								pot_energy += 4.0 * r_6_inv * (r_6_inv - 1.0) - Uc - Duc * (sqrt(r_2) - r_cut_off);
+								particles.ay[p] += f*dy;
+								particles.ay[q] -= f*dy;
+
+
+								pot_energy += 2.0 * (4.0 * r_6_inv * (r_6_inv - 1.0) - Uc - Duc * (sqrt(r_2) - r_cut_off));
 							}
 						}
 					}
