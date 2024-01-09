@@ -18,14 +18,9 @@
  */
 double comp_accel() {
 	// zero acceleration for every particle
-	for (int i = 1; i < x+1; i++) {
-		for (int j = 1; j < y+1; j++) {
-			for (int k = 0; k < cells[i][j].count; k++) {
-				int pid = cells[i][j].part_ids[k];
-				particles.ax[pid] = 0.0;
-				particles.ay[pid] = 0.0;
-			}
-		}
+	for (int p = 0; p < num_particles; p++) {
+		particles.ax[p] = 0.0;
+		particles.ay[p] = 0.0;
 	}
 
 	double pot_energy = 0.0;
@@ -108,10 +103,11 @@ void update_cells() {
 	// move particles that need to move cell lists
 	for (int i = 1; i < x+1; i++) {
 		for (int j = 1; j < y+1; j++) {
+			// we have to store the next particle here, as the remove/add at the end may be destructive
+			
 			int cell_count = cells[i][j].count;
 			int * cell_part_ids = cells[i][j].part_ids;
 			for (int k = 0; k < cell_count; k++) {
-				// we have to store the next particle here, as the remove/add at the end may be destructive
 				int p = cell_part_ids[k];
 
 				// if a particles x or y value is greater than the cell size or less than 0, it must have moved cell
