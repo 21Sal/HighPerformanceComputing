@@ -2,12 +2,23 @@
 #include <stdlib.h>
 #include <math.h>
 #include <time.h>
+#include <sys/time.h>
+#include <omp.h>
 
 #include "args.h"
 #include "boundary.h"
 #include "data.h"
 #include "setup.h"
 #include "vtk.h"
+
+struct timeval t;
+
+double get_time() {
+  gettimeofday(&t, NULL);
+  return t.tv_sec + (1e-6 * t.tv_usec);
+}
+
+
 
 /**
  * @brief This routine calculates the acceleration felt by each particle based on evaluating the Lennard-Jones 
@@ -25,6 +36,7 @@ double comp_accel() {
 
 	double pot_energy = 0.0;
 
+	#pragma omp parallel for reduction(+:pot_energy)
 	for (int i = 1; i < x+1; i++) {
 		for (int j = 1; j < y+1; j++) {
 			for (int k = 0; k < cells[i][j].count; k++) {
@@ -183,6 +195,8 @@ int main(int argc, char *argv[]) {
 	set_defaults();
 	// parse the arguments
 	parse_args(argc, argv);
+
+	double time = get_time();
 	// call set up to update defaults
 	setup();
 
@@ -234,6 +248,9 @@ int main(int argc, char *argv[]) {
 	double final_energy = kinetic_energy + potential_energy;
 	printf("Step %8d, Time: %14.8e, Final energy: %14.8e\n", iters, t, final_energy);
     printf("Simulation complete.\n");
+
+	time = get_time() - time;
+	printf("Total time: %8d\n", time);
 
 	// if output is enabled, write the mesh file and the final state
 	if (!no_output) {
