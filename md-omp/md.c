@@ -250,7 +250,7 @@ int main(int argc, char *argv[]) {
     printf("Simulation complete.\n");
 
 	time = get_time() - time;
-	printf("Total time: %8d\n", time);
+	printf("Total time: %14.8e\n", time);
 
 	// if output is enabled, write the mesh file and the final state
 	if (!no_output) {
