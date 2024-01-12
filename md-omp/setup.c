@@ -60,15 +60,18 @@ void problem_setup() {
 	// set the normalisation magnitude using the ideal gas law (T = mv^2 / 3)
 	double v_magnitude = sqrt(3.0 * init_temp);
 
-	int p_count = 0;
-
+	int num_part_per_dim_2 = num_part_per_dim * num_part_per_dim;
+	int size = 2 * num_part_per_dim_2;
+	
+	// #pragma omp parallel for reduction(+:v_sum_x) reduction(+:v_sum_y)
 	for (int i = 1; i < x+1; i++) {
 		for (int j = 1; j < y+1; j++) {
 			cells[i][j].count = 0;
-			cells[i][j].size = 2 * num_part_per_dim * num_part_per_dim;
+			cells[i][j].size = size;
 			cells[i][j].part_ids = malloc(sizeof(int) * cells[i][j].size);
 			for (int a = 0; a < num_part_per_dim; a++) {
 				for (int b = 0; b < num_part_per_dim; b++) {
+					int p_count = ((i-1)*y*num_part_per_dim_2) + ((j-1)*num_part_per_dim_2) + (a*num_part_per_dim) + b;
 					// set the particles x and y values within the current cell (on a lattice based on number of particles per cell, per dimension)
 					double part_x = 0.5 * (1.0 / num_part_per_dim) + ((double) a / num_part_per_dim);
 					double part_y = 0.5 * (1.0 / num_part_per_dim) + ((double) b / num_part_per_dim);
@@ -88,8 +91,6 @@ void problem_setup() {
 
 					v_sum_x += particles.vx[p_count];
 					v_sum_y += particles.vy[p_count];
-
-					p_count++;
 				}
 			}	
 		}
@@ -99,6 +100,7 @@ void problem_setup() {
 	double v_avg_x = v_sum_x / num_particles;
 	double v_avg_y = v_sum_y / num_particles;
 
+	#pragma omp parallel for
 	for (int i = 0; i < num_particles; i++) {
 		particles.vx[i] -= v_avg_x;
 		particles.vy[i] -= v_avg_y;
