@@ -29,6 +29,7 @@ double get_time() {
  */
 double comp_accel() {
 	// zero acceleration for every particle
+	#pragma omp parallel for
 	for (int p = 0; p < num_particles; p++) {
 		particles.ax[p] = 0.0;
 		particles.ay[p] = 0.0;
@@ -97,6 +98,7 @@ double comp_accel() {
  */
 void move_particles() {
 	// move all particles half a time step
+	#pragma omp parallel for
 	for (int p = 0; p < num_particles; p++) {
 		// update velocity to obtain v(t + Dt/2)
 		particles.vx[p] += dth * particles.ax[p];
@@ -117,6 +119,7 @@ void move_particles() {
  */
 void update_cells() {
 	// move particles that need to move cell lists
+	#pragma omp parallel for
 	for (int i = 1; i < x+1; i++) {
 		for (int j = 1; j < y+1; j++) {
 			// we have to store the next particle here, as the remove/add at the end may be destructive
@@ -168,7 +171,8 @@ void update_cells() {
  */
 double update_velocity() {
 	double kinetic_energy = 0.0;
-
+	
+	#pragma omp parallel for reduction(+:kinetic_energy)
 	for (int p = 0; p < num_particles; p++) {
 		// update velocity again by half time to obtain v(t + Dt)
 		particles.vx[p] += dth * particles.ax[p];

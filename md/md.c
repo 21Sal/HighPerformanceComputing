@@ -139,7 +139,7 @@ void update_cells() {
 					particles.y[p] = particles.y[p] + (y_shift * -cell_size);
 
 					// remove the particle from its current cell list, then add it to the new cell list
-					remove_particle(&(cells[i][j]), p);
+					remove_particle(&(cells[i][j]), k);
 					add_particle(&(cells[new_i][new_j]), p);
 				}
 			}
