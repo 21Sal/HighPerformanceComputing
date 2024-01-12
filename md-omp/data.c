@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <unistd.h>
+#include <string.h>
 
 #include "data.h"
 
@@ -75,7 +76,8 @@ void add_particle(struct cell_list * cell, int part_id) {
  * @param list The cell list to remove the particle from
  * @param particle The particle
  */
-void remove_particle(struct cell_list * cell, int part_id) {
+void remove_particle(struct cell_list * cell, int idx) {
+	memmove(cell->part_ids + idx, cell->part_ids + idx + 1, (cell->size - idx - 1) * sizeof(int));
 	cell->count--;
 }
 
