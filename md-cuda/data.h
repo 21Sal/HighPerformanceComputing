@@ -6,7 +6,6 @@ struct particle_t {
 	double * x, * y; // position within cell
 	double * ax, * ay; // acceleration
 	double * vx, * vy; // velocity
-	int * part_id;
 };
 
 // list for a cell, with a head
@@ -53,7 +52,7 @@ extern struct particle_t particles;
 
 
 void add_particle(struct cell_list * list, int part_id);
-void remove_particle(struct cell_list * list, int part_id);
+void remove_particle(struct cell_list * list, int idx);
 struct cell_list ** alloc_2d_cell_list_array(int m, int n);
 void free_2d_array(void ** array);
 

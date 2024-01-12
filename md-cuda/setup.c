@@ -53,7 +53,6 @@ void problem_setup() {
 	particles.ay = malloc(sizeof(double) * num_particles);
 	particles.vx = malloc(sizeof(double) * num_particles);
 	particles.vy = malloc(sizeof(double) * num_particles);
-	particles.part_id = malloc(sizeof(int) * num_particles);
 
 	double v_sum_x = 0.0;
 	double v_sum_y = 0.0;
@@ -66,7 +65,7 @@ void problem_setup() {
 	for (int i = 1; i < x+1; i++) {
 		for (int j = 1; j < y+1; j++) {
 			cells[i][j].count = 0;
-			cells[i][j].size = num_part_per_dim * num_part_per_dim;
+			cells[i][j].size = 2 * num_part_per_dim * num_part_per_dim;
 			cells[i][j].part_ids = malloc(sizeof(int) * cells[i][j].size);
 			for (int a = 0; a < num_part_per_dim; a++) {
 				for (int b = 0; b < num_part_per_dim; b++) {
@@ -85,7 +84,6 @@ void problem_setup() {
 					particles.y[p_count] = part_y * cell_size;
 					particles.vx[p_count] = rand_vx * v_magnitude;
 					particles.vy[p_count] = rand_vy * v_magnitude;
-					particles.part_id[p_count] = p_count;
 					add_particle(&(cells[i][j]), p_count);
 
 					v_sum_x += particles.vx[p_count];
