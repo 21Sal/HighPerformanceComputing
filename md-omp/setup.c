@@ -62,8 +62,11 @@ void problem_setup() {
 
 	int num_part_per_dim_2 = num_part_per_dim * num_part_per_dim;
 	int size = 2 * num_part_per_dim_2;
+
+	double pi_2_rand =  2.0 * M_PI / RAND_MAX;
+	double num_part_per_dim_inv = 1.0 / num_part_per_dim;
 	
-	// #pragma omp parallel for reduction(+:v_sum_x) reduction(+:v_sum_y)
+	// #pragma omp parallel for reduction(+:v_sum_x,v_sum_y)
 	for (int i = 1; i < x+1; i++) {
 		for (int j = 1; j < y+1; j++) {
 			cells[i][j].count = 0;
@@ -73,12 +76,12 @@ void problem_setup() {
 				for (int b = 0; b < num_part_per_dim; b++) {
 					int p_count = ((i-1)*y*num_part_per_dim_2) + ((j-1)*num_part_per_dim_2) + (a*num_part_per_dim) + b;
 					// set the particles x and y values within the current cell (on a lattice based on number of particles per cell, per dimension)
-					double part_x = 0.5 * (1.0 / num_part_per_dim) + ((double) a / num_part_per_dim);
-					double part_y = 0.5 * (1.0 / num_part_per_dim) + ((double) b / num_part_per_dim);
+					double part_x = 0.5 * num_part_per_dim_inv + ((double) a / num_part_per_dim);
+					double part_y = 0.5 * num_part_per_dim_inv + ((double) b / num_part_per_dim);
 
 					// generate random velocities for the particles, but make sure the overall magnitude is 1.0
 					// i.e. generate an angle between 0 and 2*PI then use cos and sin
-					double phi = (double) rand() * 2.0 * M_PI / RAND_MAX;
+					double phi = (double) rand() * pi_2_rand;
 					double rand_vx = cos(phi);
 					double rand_vy = sin(phi);
 
@@ -88,7 +91,7 @@ void problem_setup() {
 					particles.vx[p_count] = rand_vx * v_magnitude;
 					particles.vy[p_count] = rand_vy * v_magnitude;
 					add_particle(&(cells[i][j]), p_count);
-
+					
 					v_sum_x += particles.vx[p_count];
 					v_sum_y += particles.vy[p_count];
 				}
