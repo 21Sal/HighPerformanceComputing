@@ -1,5 +1,5 @@
-CC=gcc
-CFLAGS=-O3
+CC=nvcc
+CFLAGS=-g
 LIBFLAGS=-lm
 
 OBJDIR = obj
@@ -11,7 +11,7 @@ OBJ = $(patsubst %,$(OBJDIR)/%,$(_OBJ))
 
 all: directories md
 
-obj/%.o: %.c
+obj/%.o: %.cu
 	$(CC) -c -o $@ $< $(CFLAGS) 
 
 md: $(OBJ)

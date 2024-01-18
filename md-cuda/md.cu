@@ -2,12 +2,61 @@
 #include <stdlib.h>
 #include <math.h>
 #include <time.h>
+#include <cuda.h>
+#include <cuda_runtime.h>
 
 #include "args.h"
 #include "boundary.h"
 #include "data.h"
 #include "setup.h"
 #include "vtk.h"
+
+__global__ void cuda_comp_accel(int * d_part_pairs, double * d_part_x, double * d_part_y,
+								double * d_part_ax, double * d_part_ay, int * d_part_i,
+								int * d_part_j,	double * d_pot_energy_arr, int part_pair_size,
+								double cell_size, double r_cut_off, double r_cut_off_2,
+								double Duc, double Uc) {
+	// since particles are stored relative to their cell, calculate the
+	// actual x and y coordinates.
+	// int tid = blockIdx.x * blockDim.x + threadIdx.x;
+	// if (tid < part_pair_size) {
+	// 	int p = d_part_pairs[tid * 2];
+	// 	int q = d_part_pairs[tid + 1];
+
+
+	// 	double p_real_x = ((d_part_i[p]-1) * cell_size) + d_part_x[p];
+	// 	double p_real_y = ((d_part_i[p]-1) * cell_size) + d_part_y[p];
+	// 	double q_real_x = ((d_part_i[q]-1) * cell_size) + d_part_x[q];
+	// 	double q_real_y = ((d_part_j[q]-1) * cell_size) + d_part_y[q];
+		
+	// 	// calculate distance in x and y, then absolute distance
+	// 	double dx = p_real_x - q_real_x;
+	// 	double dy = p_real_y - q_real_y;
+	// 	double r_2 = dx*dx + dy*dy;
+		
+	// 	// if distance less than cut off, calculate force and 
+	// 	// use this to calculate acceleration in each dimension
+	// 	// calculate potential energy of each particle at the same time
+	// 	if (r_2 < r_cut_off_2) {
+	// 		double r_2_inv = 1.0 / r_2;
+	// 		double r_6_inv = r_2_inv * r_2_inv * r_2_inv;
+			
+	// 		double f = (48.0 * r_2_inv * r_6_inv * (r_6_inv - 0.5));
+
+	// 		d_part_ax[p] += f*dx;
+	// 		d_part_ax[q] -= f*dx;
+
+	// 		d_part_ay[p] += f*dy;
+	// 		d_part_ay[q] -= f*dy;
+
+	// 		d_pot_energy_arr[tid] = 2.0 * (4.0 * r_6_inv * (r_6_inv - 1.0) - Uc - Duc * (sqrt(r_2) - r_cut_off));
+	// 	}
+	// }
+	// else {
+	// 	printf("aaa");
+	// }
+	
+}
 
 /**
  * @brief This routine calculates the acceleration felt by each particle based on evaluating the Lennard-Jones 
@@ -16,7 +65,7 @@
  * 
  * @return double The potential energy
  */
-double comp_accel() {
+double comp_accel(int * particle_pairs, double * pot_energy_arr, double * d_pot_energy_arr) {
 	// zero acceleration for every particle
 	for (int p = 0; p < num_particles; p++) {
 		particles.ax[p] = 0.0;
@@ -25,6 +74,7 @@ double comp_accel() {
 
 	double pot_energy = 0.0;
 
+	int iter = 0;
 	for (int i = 1; i < x+1; i++) {
 		for (int j = 1; j < y+1; j++) {
 			for (int k = 0; k < cells[i][j].count; k++) {
@@ -37,43 +87,46 @@ double comp_accel() {
 							if (p >= q) {
 								continue;
 							}
-
-							// since particles are stored relative to their cell, calculate the
-							// actual x and y coordinates.
-							double p_real_x = ((i-1) * cell_size) + particles.x[p];
-							double p_real_y = ((j-1) * cell_size) + particles.y[p];
-							double q_real_x = ((i+a-1) * cell_size) + particles.x[q];
-							double q_real_y = ((j+b-1) * cell_size) + particles.y[q];
-							
-							// calculate distance in x and y, then absolute distance
-							double dx = p_real_x - q_real_x;
-							double dy = p_real_y - q_real_y;
-							double r_2 = dx*dx + dy*dy;
-							
-							// if distance less than cut off, calculate force and 
-							// use this to calculate acceleration in each dimension
-							// calculate potential energy of each particle at the same time
-							if (r_2 < r_cut_off_2) {
-								double r_2_inv = 1.0 / r_2;
-								double r_6_inv = r_2_inv * r_2_inv * r_2_inv;
-								
-								double f = (48.0 * r_2_inv * r_6_inv * (r_6_inv - 0.5));
-
-								particles.ax[p] += f*dx;
-								particles.ax[q] -= f*dx;
-
-								particles.ay[p] += f*dy;
-								particles.ay[q] -= f*dy;
-
-
-								pot_energy += 2.0 * (4.0 * r_6_inv * (r_6_inv - 1.0) - Uc - Duc * (sqrt(r_2) - r_cut_off));
+							if (iter == part_pair_size) {
+								part_pair_size *= growth_factor;
+								int * tmp = (int *) realloc(particle_pairs, sizeof(int) * part_pair_size);
+								if (!tmp) {
+									fprintf(stderr, "realloc failed, part_pair_size: %d, growth_factor: %lf\n", part_pair_size, growth_factor);
+									exit(2);
+								} else {
+									particle_pairs = tmp;
+								}
 							}
+							particle_pairs[iter] = p;
+							particle_pairs[iter+1] = q;
+							iter += 2;
 						}
 					}
 				}
 			}
 		}
 	}
+	int * d_part_pairs;
+	cudaMalloc((void **) &d_part_pairs, sizeof(int) * part_pair_size);
+	cudaMemcpy(d_part_pairs, particle_pairs, sizeof(int) * part_pair_size, cudaMemcpyHostToDevice);
+	cudaDeviceSynchronize();
+	
+	int block_size = 256;
+	int grid_size = num_particles / block_size;
+	printf("cuda-ing");
+	cuda_comp_accel<<<grid_size,block_size>>>(d_part_pairs, d_part_x, d_part_y, d_part_ax, d_part_ay,
+												d_part_i, d_part_j, d_pot_energy_arr, part_pair_size, cell_size, r_cut_off, r_cut_off_2, Duc, Uc);
+
+	cudaMemcpy(pot_energy_arr, d_pot_energy_arr, sizeof(double) * num_particles, cudaMemcpyDeviceToHost);
+	cudaDeviceSynchronize();
+
+	cudaFree(d_part_pairs);
+	d_part_pairs = NULL;
+
+	for (int p = 0; p < num_particles; p++) {
+		pot_energy += pot_energy_arr[p];
+	}
+
 	// return the average potential energy (i.e. sum / number)
 	return pot_energy / num_particles;
 }
@@ -83,16 +136,21 @@ double comp_accel() {
  *        moves the particle for a whole time step
  * 
  */
-void move_particles() {
+__global__ void move_particles(double * d_part_vx, double * d_part_vy,
+								double * d_part_x, double * d_part_y,
+								double * d_part_ax, double * d_part_ay,
+								int num_particles, double dt, double dth) {
+	int tid = blockIdx.x * blockDim.x + threadIdx.x;
+
 	// move all particles half a time step
-	for (int p = 0; p < num_particles; p++) {
+	if (tid < num_particles) {
 		// update velocity to obtain v(t + Dt/2)
-		particles.vx[p] += dth * particles.ax[p];
-		particles.vy[p] += dth * particles.ay[p];
+		d_part_vx[tid] += dth * d_part_ax[tid];
+		d_part_vy[tid] += dth * d_part_ay[tid];
 
 		// update particle coordinates to p(t + Dt) (scaled to the cell_size)
-		particles.x[p] += (dt * particles.vx[p]);
-		particles.y[p] += (dt * particles.vy[p]);
+		d_part_x[tid] += (dt * d_part_vx[tid]);
+		d_part_y[tid] += (dt * d_part_vy[tid]);
 	}
 }
 
@@ -140,7 +198,7 @@ void update_cells() {
 
 					// remove the particle from its current cell list, then add it to the new cell list
 					remove_particle(&(cells[i][j]), k);
-					add_particle(&(cells[new_i][new_j]), p);
+					add_particle(&(cells[new_i][new_j]), p, new_i, new_j);
 				}
 			}
 		}
@@ -179,6 +237,9 @@ double update_velocity() {
  * @return int The exit code of the application
  */
 int main(int argc, char *argv[]) {
+	cudaEvent_t start, stop;
+    float gpu_time;
+
 	// Set default parameters
 	set_defaults();
 	// parse the arguments
@@ -188,22 +249,71 @@ int main(int argc, char *argv[]) {
 
 	if (verbose) print_opts();
 	
+	// create events for time profiling
+    cudaEventCreate(&start);
+    cudaEventCreate(&stop);
+
+    // start the event timer
+    cudaEventRecord(start, 0);
+
 	// set up problem
 	problem_setup();
 
 	// apply boundary condition (i.e. update pointers on the boundarys to loop periodically)
 	apply_boundary();
 	
-	comp_accel();
+	int * particle_pairs = (int *) malloc(sizeof(int) * part_pair_size);
+	if(!particle_pairs){
+		fprintf(stderr, "AAA");
+		exit(1);
+	}
+
+	cudaMalloc((void **) &d_part_i, sizeof(int) * num_particles);
+	cudaMalloc((void **) &d_part_j, sizeof(int) * num_particles);
+
+	cudaMemcpy(d_part_i, particles.cell_i, sizeof(int)*num_particles, cudaMemcpyHostToDevice);
+	cudaMemcpy(d_part_j, particles.cell_j, sizeof(int)*num_particles, cudaMemcpyHostToDevice);
+	cudaDeviceSynchronize();
+
+	double * d_pot_energy_arr;
+	double * pot_energy_arr = (double *) malloc(sizeof(double) * num_particles);
+	cudaMalloc((void **) &d_pot_energy_arr, sizeof(double) * num_particles);
+	cudaMemset(d_pot_energy_arr, 0, sizeof(double) * num_particles);
+	comp_accel(particle_pairs, pot_energy_arr, d_pot_energy_arr);
 
 	double potential_energy = 0.0;
 	double kinetic_energy = 0.0;
+
+	cudaMalloc((void **) &d_part_x, sizeof(double) * num_particles);
+	cudaMalloc((void **) &d_part_y, sizeof(double) * num_particles);
+	cudaMalloc((void **) &d_part_ax, sizeof(double) * num_particles);
+	cudaMalloc((void **) &d_part_ay, sizeof(double) * num_particles);
+	cudaMalloc((void **) &d_part_vx, sizeof(double) * num_particles);
+	cudaMalloc((void **) &d_part_vy, sizeof(double) * num_particles);
 
 	int iters = 0;
 	double t;
 	for (t = 0.0; t < t_end; t+=dt, iters++) {
 		// move particles half a time step
-		move_particles();
+		cudaMemcpy(d_part_x, particles.x, sizeof(double)*num_particles, cudaMemcpyHostToDevice);
+		cudaMemcpy(d_part_y, particles.y, sizeof(double)*num_particles, cudaMemcpyHostToDevice);
+		cudaMemcpy(d_part_ax, particles.ax, sizeof(double)*num_particles, cudaMemcpyHostToDevice);
+		cudaMemcpy(d_part_ay, particles.ay, sizeof(double)*num_particles, cudaMemcpyHostToDevice);
+		cudaMemcpy(d_part_vx, particles.vx, sizeof(double)*num_particles, cudaMemcpyHostToDevice);
+		cudaMemcpy(d_part_vy, particles.vy, sizeof(double)*num_particles, cudaMemcpyHostToDevice);
+	    cudaDeviceSynchronize();
+		
+		int block_size = 256;
+		int grid_size = num_particles / block_size;
+		move_particles<<<grid_size,block_size>>>(d_part_x, d_part_y, d_part_ax, d_part_ay, d_part_vx, d_part_vy, num_particles, dt, dth);
+		
+		cudaMemcpy(particles.x, d_part_x, sizeof(double)*num_particles, cudaMemcpyDeviceToHost);
+		cudaMemcpy(particles.y, d_part_y, sizeof(double)*num_particles, cudaMemcpyDeviceToHost);
+		cudaMemcpy(particles.ax, d_part_ax, sizeof(double)*num_particles, cudaMemcpyDeviceToHost);
+		cudaMemcpy(particles.ay, d_part_ay, sizeof(double)*num_particles, cudaMemcpyDeviceToHost);
+		cudaMemcpy(particles.vx, d_part_vx, sizeof(double)*num_particles, cudaMemcpyDeviceToHost);
+		cudaMemcpy(particles.vy, d_part_vy, sizeof(double)*num_particles, cudaMemcpyDeviceToHost);
+    	cudaDeviceSynchronize();
 
 		// update cell lists (i.e. move any particles between cell lists if required)
 		update_cells();
@@ -212,7 +322,11 @@ int main(int argc, char *argv[]) {
 		apply_boundary();
 		
 		// compute acceleration for each particle and calculate potential energy
-		potential_energy = comp_accel();
+		cudaMemcpy(d_part_i, particles.cell_i, sizeof(int)*num_particles, cudaMemcpyHostToDevice);
+		cudaMemcpy(d_part_j, particles.cell_j, sizeof(int)*num_particles, cudaMemcpyHostToDevice);
+		cudaDeviceSynchronize();
+
+		potential_energy = comp_accel(particle_pairs, pot_energy_arr, d_pot_energy_arr);
 
 		// update velocity based on the acceleration and calculate the kinetic energy
 		kinetic_energy = update_velocity();

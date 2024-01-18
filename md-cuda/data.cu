@@ -34,8 +34,6 @@ double Duc;
 // constants required to calculate the potential energy
 double r2cutinv;
 double r6cutinv;
-double Uc;
-double Duc;
 
 // random seed (to allow reproducibility)
 long seed;
@@ -49,16 +47,21 @@ struct cell_list ** cells;
 
 struct particle_t particles;
 
+double * d_part_x, * d_part_y, * d_part_ax, * d_part_ay, * d_part_vx, * d_part_vy;
+int * d_part_i, * d_part_j;
+
+int part_pair_size;
+
 /**
  * @brief Add a particle to a particular cell list
  * 
  * @param list The cell list to add the particle to
  * @param particle The particle
  */
-void add_particle(struct cell_list * cell, int part_id) {
+void add_particle(struct cell_list * cell, int part_id, int i, int j) {
 	if (cell->count == cell->size) {
 		cell->size *= growth_factor;
-		int * tmp = realloc(cell->part_ids, sizeof(int) * cell->size);
+		int * tmp = (int *) realloc(cell->part_ids, sizeof(int) * cell->size);
 		if (!tmp) {
 			fprintf(stderr, "realloc failed\n");
 			exit(2);
@@ -68,6 +71,8 @@ void add_particle(struct cell_list * cell, int part_id) {
 	}
 	cell->part_ids[cell->count] = part_id;
 	cell->count++; 
+	particles.cell_i[part_id] = i;
+	particles.cell_j[part_id] = j;
 }
 
 /**

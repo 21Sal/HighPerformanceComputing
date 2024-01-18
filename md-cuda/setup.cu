@@ -2,6 +2,8 @@
 #include <time.h>
 #include <math.h>
 #include <stdio.h> 
+#include <cuda.h>
+#include<cuda_runtime.h>
 
 #include "setup.h"
 #include "data.h"
@@ -46,13 +48,17 @@ void problem_setup() {
 	// Create a grid of cell lists
 	cells = alloc_2d_cell_list_array(x+2, y+2);
 	num_particles = x * y * num_part_per_dim * num_part_per_dim;
+	part_pair_size = 2 * num_part_per_dim * num_part_per_dim * num_particles;
 
-	particles.x = malloc(sizeof(double) * num_particles);
-	particles.y = malloc(sizeof(double) * num_particles);
-	particles.ax = malloc(sizeof(double) * num_particles);
-	particles.ay = malloc(sizeof(double) * num_particles);
-	particles.vx = malloc(sizeof(double) * num_particles);
-	particles.vy = malloc(sizeof(double) * num_particles);
+	particles.x = (double *) malloc(sizeof(double) * num_particles);
+	particles.y = (double *) malloc(sizeof(double) * num_particles);
+	particles.ax = (double *) malloc(sizeof(double) * num_particles);
+	particles.ay = (double *) malloc(sizeof(double) * num_particles);
+	particles.vx = (double *) malloc(sizeof(double) * num_particles);
+	particles.vy = (double *) malloc(sizeof(double) * num_particles);
+	particles.cell_i = (int *) malloc(sizeof(int) * num_particles);
+	particles.cell_j = (int *) malloc(sizeof(int) * num_particles);
+
 
 	double v_sum_x = 0.0;
 	double v_sum_y = 0.0;
@@ -66,7 +72,7 @@ void problem_setup() {
 		for (int j = 1; j < y+1; j++) {
 			cells[i][j].count = 0;
 			cells[i][j].size = 2 * num_part_per_dim * num_part_per_dim;
-			cells[i][j].part_ids = malloc(sizeof(int) * cells[i][j].size);
+			cells[i][j].part_ids = (int *) malloc(sizeof(int) * cells[i][j].size);
 			for (int a = 0; a < num_part_per_dim; a++) {
 				for (int b = 0; b < num_part_per_dim; b++) {
 					// set the particles x and y values within the current cell (on a lattice based on number of particles per cell, per dimension)
@@ -84,7 +90,7 @@ void problem_setup() {
 					particles.y[p_count] = part_y * cell_size;
 					particles.vx[p_count] = rand_vx * v_magnitude;
 					particles.vy[p_count] = rand_vy * v_magnitude;
-					add_particle(&(cells[i][j]), p_count);
+					add_particle(&(cells[i][j]), p_count, i, j);
 
 					v_sum_x += particles.vx[p_count];
 					v_sum_y += particles.vy[p_count];
