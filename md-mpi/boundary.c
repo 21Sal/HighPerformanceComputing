@@ -9,17 +9,31 @@
  *        operations hasn't broken things.
  * 
  */
-void apply_boundary() {
+void apply_boundary(int sizej, MPI_Datatype my_column) {
 	// Apply boundary conditions
-	for (int j = 1; j < y+1; j++) {
-		cells[0][j].part_ids = cells[x][j].part_ids;
-		cells[0][j].count = cells[x][j].count;
-		cells[0][j].size = cells[x][j].size;
+	int rank, size;
 
-		cells[x+1][j].part_ids = cells[1][j].part_ids;
-		cells[x+1][j].count = cells[1][j].count;
-		cells[x+1][j].size = cells[1][j].size;
-	}
+	MPI_Comm_size(MPI_COMM_WORLD, &size);
+	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+	int left = (rank - 1) < 0 ? size - 1 : rank - 1;
+	int right = (rank + 1) >= size ? 0 : rank + 1;
+
+	// exchange column 1 with right-most ghost column
+	MPI_Sendrecv(&cells[0][1], 1, my_column, left, 0, &cells[0][sizej], my_column, right, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+	
+	// exchange right-most regular column with left-most ghost column 
+	MPI_Sendrecv(&cells[0][sizej], 1, my_column, left, 0, &cells[0][0], my_column, right, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
+	// for (int j = 1; j < y+1; j++) {
+	// 	cells[0][j].part_ids = cells[x][j].part_ids;
+	// 	cells[0][j].count = cells[x][j].count;
+	// 	cells[0][j].size = cells[x][j].size;
+
+	// 	cells[x+1][j].part_ids = cells[1][j].part_ids;
+	// 	cells[x+1][j].count = cells[1][j].count;
+	// 	cells[x+1][j].size = cells[1][j].size;
+	// }
 
 	for (int i = 0; i < x+2; i++) {
 		cells[i][0].part_ids = cells[i][y].part_ids;

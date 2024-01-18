@@ -2,12 +2,14 @@
 #include <stdlib.h>
 #include <math.h>
 #include <time.h>
+#include <mpi.h>
 
 #include "args.h"
 #include "boundary.h"
 #include "data.h"
 #include "setup.h"
 #include "vtk.h"
+
 
 /**
  * @brief This routine calculates the acceleration felt by each particle based on evaluating the Lennard-Jones 
@@ -74,6 +76,9 @@ double comp_accel() {
 			}
 		}
 	}
+
+	MPI_Allreduce(MPI_IN_PLACE, &pot_energy, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+
 	// return the average potential energy (i.e. sum / number)
 	return pot_energy / num_particles;
 }
@@ -179,20 +184,42 @@ double update_velocity() {
  * @return int The exit code of the application
  */
 int main(int argc, char *argv[]) {
+	int size, rank;
+
+	MPI_Init(&argc, &argv);
+	MPI_Comm_size(MPI_COMM_WORLD, &size);
+	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+	// calculate the start and end indicies for parallel processors
+    int startj = rank * (x/size) - 1;
+    if (startj < 0) startj = 0;
+    int endj = (rank+1) * (x/size);
+    if (endj >= x-1) endj = x - 1;
+
+	// calculated the size of the used portion of the array on each parallel processor
+    int sizej = endj - startj + 1;
+
+	// set up a custom data type that is M doubles in a column.
+    // The gap will be "sizej" (i.e. the size of a row on each processor)
+    MPI_Datatype my_column;
+    MPI_Type_vector(y, 1, sizej, MPI_DOUBLE, &my_column);
+    MPI_Type_commit(&my_column);
+
+
 	// Set default parameters
 	set_defaults();
 	// parse the arguments
-	parse_args(argc, argv);
+	if (rank == 0) parse_args(argc, argv);
 	// call set up to update defaults
 	setup();
 
-	if (verbose) print_opts();
+	if (rank == 0 && verbose) print_opts();
 	
 	// set up problem
 	problem_setup();
 
 	// apply boundary condition (i.e. update pointers on the boundarys to loop periodically)
-	apply_boundary();
+	apply_boundary(sizej, my_column);
 	
 	comp_accel();
 
@@ -209,7 +236,7 @@ int main(int argc, char *argv[]) {
 		update_cells();
 
 		// update pointers (because the previous operation might break boundary cell lists)
-		apply_boundary();
+		apply_boundary(sizej, my_column);
 		
 		// compute acceleration for each particle and calculate potential energy
 		potential_energy = comp_accel();

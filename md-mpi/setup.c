@@ -95,6 +95,8 @@ void problem_setup() {
 		}
 	}
 
+	MPI_Allreduce(MPI_IN_PLACE, &v_sum_x, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+
 	// Normalise data to make sure that the total momentum is 0.0 at the start
 	double v_avg_x = v_sum_x / num_particles;
 	double v_avg_y = v_sum_y / num_particles;
