@@ -6,6 +6,7 @@ struct particle_t {
 	double * x, * y; // position within cell
 	double * ax, * ay; // acceleration
 	double * vx, * vy; // velocity
+	int * part_id;
 };
 
 // list for a cell, with a head
@@ -49,7 +50,12 @@ extern int num_part_per_dim;
 // the cell list
 extern struct cell_list ** cells;
 extern struct particle_t particles;
-
+extern int sizej;
+extern int sizei;
+extern MPI_Comm cart_comm;
+extern MPI_Datatype my_column;
+extern MPI_Datatype mpi_cell_t;
+extern int east_rank, west_rank, north_rank, south_rank
 
 void add_particle(struct cell_list * list, int part_id);
 void remove_particle(struct cell_list * list, int idx);

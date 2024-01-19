@@ -27,8 +27,8 @@ double comp_accel() {
 
 	double pot_energy = 0.0;
 
-	for (int i = 1; i < x+1; i++) {
-		for (int j = 1; j < y+1; j++) {
+	for (int i = 1; i < sizei+1; i++) {
+		for (int j = 1; j < sizej+1; j++) {
 			for (int k = 0; k < cells[i][j].count; k++) {
 				int p = cells[i][j].part_ids[k];
 				// Compare each particle with all particles in the 9 cells
@@ -110,8 +110,8 @@ void move_particles() {
  */
 void update_cells() {
 	// move particles that need to move cell lists
-	for (int i = 1; i < x+1; i++) {
-		for (int j = 1; j < y+1; j++) {
+	for (int i = 1; i < sizei+1; i++) {
+		for (int j = 1; j < sizej+1; j++) {
 			// we have to store the next particle here, as the remove/add at the end may be destructive
 			
 			int cell_count = cells[i][j].count;
@@ -184,25 +184,45 @@ double update_velocity() {
  * @return int The exit code of the application
  */
 int main(int argc, char *argv[]) {
-	int size, rank;
 
 	MPI_Init(&argc, &argv);
 	MPI_Comm_size(MPI_COMM_WORLD, &size);
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
+	int dims[2] = {0,0};
+	int periods[2] = {1,1};
+
+	MPI_Dims_create(size, 2 , dims);
+	MPI_Cart_create(MPI_COMM_WORLD, 2, dims, periods, 0, &cart_comm);
+	
+	MPI_Cart_shift(cart_comm, 0, 1, &west_rank, &east_rank);
+   	MPI_Cart_shift(cart_comm, 1, 1, &south_rank, &north_rank);
+
+
 	// calculate the start and end indicies for parallel processors
-    int startj = rank * (x/size) - 1;
+    int startj = rank * ((x+2)/dims[0]) - 1;
     if (startj < 0) startj = 0;
-    int endj = (rank+1) * (x/size);
-    if (endj >= x-1) endj = x - 1;
+    int endj = (rank+1) * ((x+2)/dims[0]);
+    if (endj >= (x+1)) endj = (x+1);
 
 	// calculated the size of the used portion of the array on each parallel processor
-    int sizej = endj - startj + 1;
+    sizej = endj - startj + 1;
 
+	// calculate the start and end indicies for parallel processors
+    int starti = rank * ((y+2)/dims[1]) - 1;
+    if (starti < 0) starti = 0;
+    int endi = (rank+1) * ((y+2)/dims[1]);
+    if (endi >= (y+1)) endi = (y+1);
+
+	// calculated the size of the used portion of the array on each parallel processor
+    sizei = endi - starti + 1;
+
+	MPI_Type_contiguous((2*num_part_per_dim*num_part_per_dim) + 2, MPI_INT, &mpi_cell_t);
+	MPI_Type_commit(&mpi_cell_t);
+	
 	// set up a custom data type that is M doubles in a column.
     // The gap will be "sizej" (i.e. the size of a row on each processor)
-    MPI_Datatype my_column;
-    MPI_Type_vector(y, 1, sizej, MPI_DOUBLE, &my_column);
+    MPI_Type_vector(sizei, 1, sizej, mpi_particle_t, &my_column);
     MPI_Type_commit(&my_column);
 
 
@@ -219,7 +239,7 @@ int main(int argc, char *argv[]) {
 	problem_setup();
 
 	// apply boundary condition (i.e. update pointers on the boundarys to loop periodically)
-	apply_boundary(sizej, my_column);
+	apply_boundary(my_column);
 	
 	comp_accel();
 
@@ -246,10 +266,15 @@ int main(int argc, char *argv[]) {
 	
 		if (iters % output_freq == 0) {
 			// calculate temperature and total energy
+			MPI_Allreduce(MPI_IN_PLACE, &potential_energy, 1, MPI_DOUBLE, MPI_SUM, cart_comm);
+			MPI_Allreduce(MPI_IN_PLACE, &kinetic_energy, 1, MPI_DOUBLE, MPI_SUM, cart_comm);
+
 			double total_energy = kinetic_energy + potential_energy;
 			double temp = kinetic_energy * 2.0 / 3.0;
-
-			printf("Step %8d, Time: %14.8e (dt: %14.8e), Total energy: %14.8e (p:%14.8e,k:%14.8e), Temp: %14.8e\n", iters, t+dt, dt, total_energy, potential_energy, kinetic_energy, temp);
+			
+			if(rank == 0) {
+				printf("Step %8d, Time: %14.8e (dt: %14.8e), Total energy: %14.8e (p:%14.8e,k:%14.8e), Temp: %14.8e\n", iters, t+dt, dt, total_energy, potential_energy, kinetic_energy, temp);
+			}
  
 			// if output is enabled and checkpointing is enabled, write out
             if ((!no_output) && (enable_checkpoints))
@@ -258,10 +283,14 @@ int main(int argc, char *argv[]) {
 	}
 
 	// calculate the final energy and write out a final status message
+	MPI_Allreduce(MPI_IN_PLACE, &potential_energy, 1, MPI_DOUBLE, MPI_SUM, cart_comm);
+	MPI_Allreduce(MPI_IN_PLACE, &kinetic_energy, 1, MPI_DOUBLE, MPI_SUM, cart_comm);
 	double final_energy = kinetic_energy + potential_energy;
-	printf("Step %8d, Time: %14.8e, Final energy: %14.8e\n", iters, t, final_energy);
-    printf("Simulation complete.\n");
-
+	if (rank == 0) {
+		printf("Step %8d, Time: %14.8e, Final energy: %14.8e\n", iters, t, final_energy);
+		printf("Simulation complete.\n");
+	}
+	
 	// if output is enabled, write the mesh file and the final state
 	if (!no_output) {
 		write_mesh();

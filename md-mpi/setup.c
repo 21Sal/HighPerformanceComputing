@@ -44,8 +44,8 @@ void setup() {
 void problem_setup() {
 	
 	// Create a grid of cell lists
-	cells = alloc_2d_cell_list_array(x+2, y+2);
-	num_particles = x * y * num_part_per_dim * num_part_per_dim;
+	cells = alloc_2d_cell_list_array(sizei, sizej);
+	num_particles = sizej * sizei * num_part_per_dim * num_part_per_dim;
 
 	particles.x = malloc(sizeof(double) * num_particles);
 	particles.y = malloc(sizeof(double) * num_particles);
@@ -53,6 +53,7 @@ void problem_setup() {
 	particles.ay = malloc(sizeof(double) * num_particles);
 	particles.vx = malloc(sizeof(double) * num_particles);
 	particles.vy = malloc(sizeof(double) * num_particles);
+	particles.part_id = malloc(sizeof(double) * num_particles);
 
 	double v_sum_x = 0.0;
 	double v_sum_y = 0.0;
@@ -62,8 +63,8 @@ void problem_setup() {
 
 	int p_count = 0;
 
-	for (int i = 1; i < x+1; i++) {
-		for (int j = 1; j < y+1; j++) {
+	for (int i = 1; i < sizei+1; i++) {
+		for (int j = 1; j < sizej+1; j++) {
 			cells[i][j].count = 0;
 			cells[i][j].size = 2 * num_part_per_dim * num_part_per_dim;
 			cells[i][j].part_ids = malloc(sizeof(int) * cells[i][j].size);
@@ -95,7 +96,7 @@ void problem_setup() {
 		}
 	}
 
-	MPI_Allreduce(MPI_IN_PLACE, &v_sum_x, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+	MPI_Allreduce(MPI_IN_PLACE, &v_sum_x, 1, MPI_DOUBLE, MPI_SUM, cart_comm);
 
 	// Normalise data to make sure that the total momentum is 0.0 at the start
 	double v_avg_x = v_sum_x / num_particles;
