@@ -48,7 +48,7 @@ struct cell_list ** cells;
 struct particle_t particles;
 
 double * d_part_x, * d_part_y, * d_part_ax, * d_part_ay, * d_part_vx, * d_part_vy;
-int * d_part_i, * d_part_j;
+int * d_cell_count, * d_cell_part_ids, * d_part_i, * d_part_j;
 
 int part_pair_size;
 

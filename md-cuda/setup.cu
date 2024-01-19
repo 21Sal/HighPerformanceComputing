@@ -48,7 +48,6 @@ void problem_setup() {
 	// Create a grid of cell lists
 	cells = alloc_2d_cell_list_array(x+2, y+2);
 	num_particles = x * y * num_part_per_dim * num_part_per_dim;
-	part_pair_size = 2 * num_part_per_dim * num_part_per_dim * num_particles;
 
 	particles.x = (double *) malloc(sizeof(double) * num_particles);
 	particles.y = (double *) malloc(sizeof(double) * num_particles);
