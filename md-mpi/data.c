@@ -52,7 +52,8 @@ struct particle_t particles;
 int size, rank;
 int sizei, sizej;
 MPI_Comm cart_comm;
-MPI_Datatype my_column;
+MPI_Datatype mpi_part_ids_column;
+MPI_Datatype mpi_count_column;
 MPI_Datatype mpi_cell_t;
 
 int east_rank, west_rank, north_rank, south_rank;

@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <math.h>
 #include <time.h>
-#include <mpi.h>
 
 #include "args.h"
 #include "boundary.h"
@@ -19,6 +18,7 @@
  * @return double The potential energy
  */
 double comp_accel() {
+	printf("starting comp_accel");
 	// zero acceleration for every particle
 	for (int p = 0; p < num_particles; p++) {
 		particles.ax[p] = 0.0;
@@ -39,6 +39,8 @@ double comp_accel() {
 							if (p >= q) {
 								continue;
 							}
+							printf("in comp_accel");
+
 
 							// since particles are stored relative to their cell, calculate the
 							// actual x and y coordinates.
@@ -191,39 +193,33 @@ int main(int argc, char *argv[]) {
 
 	int dims[2] = {0,0};
 	int periods[2] = {1,1};
+	int my_coords[2];
 
 	MPI_Dims_create(size, 2 , dims);
 	MPI_Cart_create(MPI_COMM_WORLD, 2, dims, periods, 0, &cart_comm);
+	
+	MPI_Cart_coords(cart_comm, rank, 2, my_coords);
 	
 	MPI_Cart_shift(cart_comm, 0, 1, &west_rank, &east_rank);
    	MPI_Cart_shift(cart_comm, 1, 1, &south_rank, &north_rank);
 
 
-	// calculate the start and end indicies for parallel processors
-    int startj = rank * ((x+2)/dims[0]) - 1;
-    if (startj < 0) startj = 0;
-    int endj = (rank+1) * ((x+2)/dims[0]);
-    if (endj >= (x+1)) endj = (x+1);
-
-	// calculated the size of the used portion of the array on each parallel processor
-    sizej = endj - startj + 1;
 
 	// calculate the start and end indicies for parallel processors
-    int starti = rank * ((y+2)/dims[1]) - 1;
-    if (starti < 0) starti = 0;
-    int endi = (rank+1) * ((y+2)/dims[1]);
-    if (endi >= (y+1)) endi = (y+1);
 
 	// calculated the size of the used portion of the array on each parallel processor
-    sizei = endi - starti + 1;
+    sizej = x/dims[0];
 
-	MPI_Type_contiguous((2*num_part_per_dim*num_part_per_dim) + 2, MPI_INT, &mpi_cell_t);
-	MPI_Type_commit(&mpi_cell_t);
+	// calculated the size of the used portion of the array on each parallel processor
+    sizei = y/dims[1];
 	
 	// set up a custom data type that is M doubles in a column.
     // The gap will be "sizej" (i.e. the size of a row on each processor)
-    MPI_Type_vector(sizei, 1, sizej, mpi_particle_t, &my_column);
-    MPI_Type_commit(&my_column);
+    MPI_Type_vector(sizei, (2*num_part_per_dim*num_part_per_dim), sizej, MPI_INT, &mpi_part_ids_column);
+    MPI_Type_vector(sizei, 1, sizej, MPI_INT, &mpi_count_column);
+
+    MPI_Type_commit(&mpi_part_ids_column);
+    MPI_Type_commit(&mpi_count_column);
 
 
 	// Set default parameters
@@ -237,9 +233,9 @@ int main(int argc, char *argv[]) {
 	
 	// set up problem
 	problem_setup();
-
 	// apply boundary condition (i.e. update pointers on the boundarys to loop periodically)
-	apply_boundary(my_column);
+	apply_boundary();
+	printf("post apply boundary\n");
 	
 	comp_accel();
 
@@ -256,7 +252,7 @@ int main(int argc, char *argv[]) {
 		update_cells();
 
 		// update pointers (because the previous operation might break boundary cell lists)
-		apply_boundary(sizej, my_column);
+		apply_boundary();
 		
 		// compute acceleration for each particle and calculate potential energy
 		potential_energy = comp_accel();

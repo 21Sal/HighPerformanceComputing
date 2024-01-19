@@ -44,7 +44,7 @@ void setup() {
 void problem_setup() {
 	
 	// Create a grid of cell lists
-	cells = alloc_2d_cell_list_array(sizei, sizej);
+	cells = alloc_2d_cell_list_array(sizei+2, sizej+2);
 	num_particles = sizej * sizei * num_part_per_dim * num_part_per_dim;
 
 	particles.x = malloc(sizeof(double) * num_particles);
@@ -53,7 +53,7 @@ void problem_setup() {
 	particles.ay = malloc(sizeof(double) * num_particles);
 	particles.vx = malloc(sizeof(double) * num_particles);
 	particles.vy = malloc(sizeof(double) * num_particles);
-	particles.part_id = malloc(sizeof(double) * num_particles);
+	particles.part_id = malloc(sizeof(int) * num_particles);
 
 	double v_sum_x = 0.0;
 	double v_sum_y = 0.0;
