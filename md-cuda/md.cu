@@ -36,8 +36,8 @@ __global__ void cuda_comp_accel(int * d_cell_count, int * d_cell_part_ids, doubl
 	// Compare each particle with all particles in the 9 cells
 	for (int a = -1; a <= 1; a++) {
 		for (int b = -1; b <= 1; b++) {
-			for (int l = 0; l < d_cell_count[(i+a) * (y+1) + (j+b)]; l++) {
-				int q = d_cell_part_ids[(l * 2*num_part_per_dim*num_part_per_dim * (y+1)) + (i * (y+1)) + j];
+			for (int k = 0; k < d_cell_count[(i+a) * (y+1) + (j+b)]; k++) {
+				int q = d_cell_part_ids[(k * 2*num_part_per_dim*num_part_per_dim * (y+1)) + ((i+a) * (y+1)) + (j+b)];
 				if (p == q) {
 					continue;
 				}
@@ -254,16 +254,16 @@ int main(int argc, char *argv[]) {
 	cudaMemset(d_pot_energy_arr, 0, sizeof(double) * num_particles);
 	cudaMalloc((void **) &d_cell_count, sizeof(int) * (x+2) * (y+2));
 	cudaMalloc((void **) &d_cell_part_ids, sizeof(int) * (x+2) * (y+2) * 2 * num_part_per_dim * num_part_per_dim);
-	
+	CUDAErrorCheck();
 	cudaMallocHost((void **) &h_cell_part_ids, sizeof(int) * (x+2) * (y+2) * 2 * num_part_per_dim * num_part_per_dim);
 	cudaMallocHost((void **) &h_cell_count, sizeof(int) * (x+2) * (y+2));
 
 	for (int i = 0; i < (x+2); i++) {
 		for (int j = 0; j < (y+2); j++) {
 			for (int k = 0; k < 2 * num_part_per_dim * num_part_per_dim; k++) {
-				h_cell_part_ids[(k * 2*num_part_per_dim*num_part_per_dim * (y+1)) + (i * (y+1)) + j] = cells[i][j].part_ids[k];
+				h_cell_part_ids[(k * 2*num_part_per_dim*num_part_per_dim * (y+2)) + (i * (y+2)) + j] = cells[i][j].part_ids[k];
 			}
-			h_cell_count[i * (y+1) + j] = cells[i][j].count;
+			h_cell_count[i * (y+2) + j] = cells[i][j].count;
 		}
 	}
 
@@ -335,9 +335,9 @@ int main(int argc, char *argv[]) {
 		for (int i = 0; i < (x+2); i++) {
 			for (int j = 0; j < (y+2); j++) {
 				for (int k = 0; k < 2 * num_part_per_dim * num_part_per_dim; k++) {
-					h_cell_part_ids[(k * 2*num_part_per_dim*num_part_per_dim * (y+1)) + (i * (y+1)) + j] = cells[i][j].part_ids[k];
+					h_cell_part_ids[(k * 2*num_part_per_dim*num_part_per_dim * (y+2)) + (i * (y+2)) + j] = cells[i][j].part_ids[k];
 				}
-				h_cell_count[i * (y+1) + j] = cells[i][j].count;
+				h_cell_count[i * (y+2) + j] = cells[i][j].count;
 			}
 		}
 
