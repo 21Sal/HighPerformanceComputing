@@ -57,6 +57,7 @@ extern MPI_Datatype mpi_part_ids_column;
 extern MPI_Datatype mpi_count_column;
 extern MPI_Datatype mpi_cell_t;
 extern int east_rank, west_rank, north_rank, south_rank;
+extern int * cell_part_ids_flat;
 
 void add_particle(struct cell_list * list, int part_id);
 void remove_particle(struct cell_list * list, int idx);

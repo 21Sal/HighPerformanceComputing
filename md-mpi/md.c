@@ -215,10 +215,10 @@ int main(int argc, char *argv[]) {
 	
 	// set up a custom data type that is M doubles in a column.
     // The gap will be "sizej" (i.e. the size of a row on each processor)
-    MPI_Type_vector(sizei, (2*num_part_per_dim*num_part_per_dim), sizej, MPI_INT, &mpi_part_ids_column);
-    MPI_Type_vector(sizei, 1, sizej, MPI_INT, &mpi_count_column);
+    // MPI_Type_vector(sizei, (2*num_part_per_dim*num_part_per_dim), sizej, MPI_INT, &mpi_part_ids_column);
+    MPI_Type_vector(sizei+2, 1, sizej+2, MPI_INT, &mpi_count_column);
 
-    MPI_Type_commit(&mpi_part_ids_column);
+    // MPI_Type_commit(&mpi_part_ids_column);
     MPI_Type_commit(&mpi_count_column);
 
 
