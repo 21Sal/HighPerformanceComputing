@@ -20,57 +20,60 @@ void CUDAErrorCheck() {
 }
 
 
-__global__ void cuda_comp_accel(int * d_part_neighbour_list, int * d_neighbour_a, int * d_neighbour_b, double * d_part_x, double * d_part_y,
-								double * d_part_ax, double * d_part_ay, int * d_part_i, int * d_part_j, double * d_pot_energy_arr,
+__global__ void cuda_comp_accel(int x, int y, double * d_part_x, double * d_part_y,
+								double * d_part_ax, double * d_part_ay, double * d_pot_energy_arr,
+								int * d_cell_count, int * d_cell_part_ids,
 								double cell_size, double r_cut_off, double r_cut_off_2,
 								double Duc, double Uc, int num_particles, int num_part_per_dim) {
-	int p = blockIdx.x * blockDim.x + threadIdx.x;
 	
-	if(p < num_particles) {
-		int i = d_part_i[p];
-		int j = d_part_j[p];
+	int i = blockIdx.y * blockDim.y + threadIdx.y + 1;
+	int j = blockIdx.x * blockDim.x + threadIdx.x + 1;
+
+	if (i > 0 && j > 0 && i < (x+1) && j < (y+1)) {
+		for (int k = 0; k < d_cell_count[(i*(y+2)) + j]; k++) {
+			int p = d_cell_part_ids[(i*(y+2)*2*num_part_per_dim*num_part_per_dim) + (j*2*num_part_per_dim*num_part_per_dim) + k];
+			// Compare each particle with all particles in the 9 cells
+			for (int a = -1; a <= 1; a++) {
+				for (int b = -1; b <= 1; b++) {
+					for (int l = 0; l < d_cell_count[((i+a)*(y+2)) + (j+b)]; l++) {
+						int q = d_cell_part_ids[((i+a)*(y+2)*2*num_part_per_dim*num_part_per_dim) + ((j+b)*2*num_part_per_dim*num_part_per_dim) + l];
+						if (p == q) {
+							continue;
+						}
+
+						// since particles are stored relative to their cell, calculate the
+						// actual x and y coordinates.
+						double p_real_x = ((i-1) * cell_size) + d_part_x[p];
+						double p_real_y = ((j-1) * cell_size) + d_part_y[p];
+						double q_real_x = ((i+a-1) * cell_size) + d_part_x[q];
+						double q_real_y = ((j+b-1) * cell_size) + d_part_y[q];
+						
+						// calculate distance in x and y, then absolute distance
+						double dx = p_real_x - q_real_x;
+						double dy = p_real_y - q_real_y;
+						double r_2 = dx*dx + dy*dy;
+						
+						// if distance less than cut off, calculate force and 
+						// use this to calculate acceleration in each dimension
+						// calculate potential energy of each particle at the same time
+						if (r_2 < r_cut_off_2) {
+							double r_2_inv = 1.0 / r_2;
+							double r_6_inv = r_2_inv * r_2_inv * r_2_inv;
+							
+							double f = (48.0 * r_2_inv * r_6_inv * (r_6_inv - 0.5));
+
+							d_part_ax[p] += f*dx;
+							d_part_ay[p] += f*dy;
 
 
-		for (int n = 0; n < 2*num_part_per_dim*num_part_per_dim; n++) {
-			int q = d_part_neighbour_list[(p*2*num_part_per_dim*num_part_per_dim) + n];
-			if (q < 0) {
-				continue;
-			}
-			int iq = d_neighbour_a[(p*2*num_part_per_dim*num_part_per_dim) + n];
-			int jq = d_neighbour_b[(p*2*num_part_per_dim*num_part_per_dim) + n];
-			// since particles are stored relative to their cell, calculate the
-			// actual x and y coordinates.
-
-			double p_real_x = ((i-1) * cell_size) + d_part_x[p];
-			double p_real_y = ((j-1) * cell_size) + d_part_y[p];
-			double q_real_x = ((iq-1) * cell_size) + d_part_x[q];
-			double q_real_y = ((jq-1) * cell_size) + d_part_y[q];
-			
-			// calculate distance in x and y, then absolute distance
-			double dx = p_real_x - q_real_x;
-			double dy = p_real_y - q_real_y;
-			double r_2 = dx*dx + dy*dy;
-			
-			// if distance less than cut off, calculate force and 
-			// use this to calculate acceleration in each dimension
-			// calculate potential energy of each particle at the same time
-			if (r_2 < r_cut_off_2) {
-				double r_2_inv = 1.0 / r_2;
-				double r_6_inv = r_2_inv * r_2_inv * r_2_inv;
-				double f = (48.0 * r_2_inv * r_6_inv * (r_6_inv - 0.5));
-
-				d_part_ax[p] += f*dx;
-
-				d_part_ay[p] += f*dy;
-				
-				d_pot_energy_arr[p] += 4.0 * r_6_inv * (r_6_inv - 1.0) - Uc - Duc * (sqrt(r_2) - r_cut_off);
-				// printf("d_pot %lf, r_6_inv %lf, Uc %lf, Duc %lf\n", d_pot_energy_arr[p], r_6_inv, Uc, Duc);
-				// printf("p %d q %d dx %lf dy %lf\n", p, q, dx, dy);
+							d_pot_energy_arr[(i*(y+2)) + j] += 4.0 * r_6_inv * (r_6_inv - 1.0) - Uc - Duc * (sqrt(r_2) - r_cut_off);
+						}
+					}
+				}
 			}
 		}
 	}
 }
-
 
 /**
  * @brief This routine calculates the acceleration felt by each particle based on evaluating the Lennard-Jones 
@@ -84,59 +87,36 @@ double comp_accel() {
 	for (int p = 0; p < num_particles; p++) {
 		particles.ax[p] = 0.0;
 		particles.ay[p] = 0.0;
-		particles.num_neighbours[p] = 0;
-	}
-
-	for (int m = 0; m < num_particles*2*num_part_per_dim*num_part_per_dim; m++) {
-		part_neighbour_list[m] = -1;
 	}
 
 	double pot_energy = 0.0;
-	cudaMemset(d_pot_energy_arr, 0.0, sizeof(double) * num_particles);
-	// Compare each particle with all particles in the 9 cells
-	for (int i = 1; i < x+1; i++) {
-		for (int j = 1; j < y+1; j++) {
-			for (int k = 0; k < cells[i][j].count; k++) {
-				int p = cells[i][j].part_ids[k];
-				// Compare each particle with all particles in the 9 cells
-				for (int a = -1; a <= 1; a++) {
-					for (int b = -1; b <= 1; b++) {
-						for (int l = 0; l < cells[i+a][j+b].count; l++) {
-							int q = cells[i+a][j+b].part_ids[l];
-							if (p == q) {
-								continue;
-							}
-							part_neighbour_list[(p*2*num_part_per_dim*num_part_per_dim) + particles.num_neighbours[p]] = q;
-							neighbour_a[(p*2*num_part_per_dim*num_part_per_dim) + particles.num_neighbours[p]] = i+a;
-							neighbour_b[(p*2*num_part_per_dim*num_part_per_dim) + particles.num_neighbours[p]] = j+b;
-							particles.num_neighbours[p]++;
-						}
-					}
-				}
-			}
-		}
-	}
-	cudaMemcpy(d_neighbour_a, neighbour_a, sizeof(int)*num_particles*2*num_part_per_dim*num_part_per_dim, cudaMemcpyHostToDevice);
-	cudaMemcpy(d_neighbour_b, neighbour_b, sizeof(int)*num_particles*2*num_part_per_dim*num_part_per_dim, cudaMemcpyHostToDevice);
-	cudaMemcpy(d_part_neighbour_list, part_neighbour_list, sizeof(int)*num_particles*2*num_part_per_dim*num_part_per_dim, cudaMemcpyHostToDevice);
+	cudaMemset(d_pot_energy_arr, 0.0, sizeof(double) * (x+2)*(y+2));
 	cudaMemcpy(d_part_ax, particles.ax, sizeof(double)*num_particles, cudaMemcpyHostToDevice);
 	cudaMemcpy(d_part_ay, particles.ay, sizeof(double)*num_particles, cudaMemcpyHostToDevice);
-	cudaMemcpy(d_num_neighbours, particles.num_neighbours, sizeof(int)*num_particles, cudaMemcpyHostToDevice);
 	CUDAErrorCheck();
 	cudaDeviceSynchronize();
 
-	int block_size = 256;
-	int grid_size = num_particles / block_size;
-	cuda_comp_accel<<<grid_size,block_size>>>(d_part_neighbour_list, d_neighbour_a, d_neighbour_b, d_part_x, d_part_y, d_part_ax, d_part_ay,
-												d_part_i, d_part_j, d_pot_energy_arr, cell_size,
+	int BLOCK_SIZE = 32;
+	unsigned int grid_rows = ((x) + BLOCK_SIZE - 1) / BLOCK_SIZE;
+    unsigned int grid_cols = ((y) + BLOCK_SIZE - 1) / BLOCK_SIZE;
+    dim3 dimGrid(grid_cols, grid_rows);
+    dim3 dimBlock(BLOCK_SIZE, BLOCK_SIZE);
+
+	cuda_comp_accel<<<dimGrid,dimBlock>>>(x, y, d_part_x, d_part_y, d_part_ax, d_part_ay,
+												d_pot_energy_arr, d_cell_count, d_cell_part_ids, cell_size,
 												r_cut_off, r_cut_off_2, Duc, Uc, num_particles, num_part_per_dim);
 	CUDAErrorCheck();
-	cudaMemcpy(pot_energy_arr, d_pot_energy_arr, sizeof(double) * num_particles, cudaMemcpyDeviceToHost);
+	cudaMemcpy(pot_energy_arr, d_pot_energy_arr, sizeof(double) * (x+2)*(y+2), cudaMemcpyDeviceToHost);
 	cudaDeviceSynchronize();
 
-	for (int p = 0; p < num_particles; p++) {
-		pot_energy += pot_energy_arr[p];
+	int count = 0;
+	for (int i = 0; i < (x+2)*(y+2); i++) {
+		pot_energy += pot_energy_arr[i];
+		if(pot_energy_arr[i] == 0.0) {
+			count++;
+		}
 	}
+	// printf("count %d\n", count);
 
 	// return the average potential energy (i.e. sum / number)
 	return pot_energy / num_particles;
@@ -273,25 +253,32 @@ int main(int argc, char *argv[]) {
 	// apply boundary condition (i.e. update pointers on the boundarys to loop periodically)
 	apply_boundary();
 
-	pot_energy_arr = (double *) malloc(sizeof(double) * num_particles);
+	pot_energy_arr = (double *) malloc(sizeof(double) * (x+2)*(y+2));
 	
-	cudaMalloc((void **) &d_part_i, sizeof(int) * num_particles);
-	cudaMalloc((void **) &d_part_j, sizeof(int) * num_particles);
 	cudaMalloc((void **) &d_part_x, sizeof(double) * num_particles);
 	cudaMalloc((void **) &d_part_y, sizeof(double) * num_particles);
 	cudaMalloc((void **) &d_part_ax, sizeof(double) * num_particles);
 	cudaMalloc((void **) &d_part_ay, sizeof(double) * num_particles);
 	cudaMalloc((void **) &d_part_vx, sizeof(double) * num_particles);
 	cudaMalloc((void **) &d_part_vy, sizeof(double) * num_particles);
-	cudaMalloc((void **) &d_pot_energy_arr, sizeof(double) * num_particles);
-	cudaMalloc((void **) &d_part_neighbour_list, sizeof(int) * num_particles * (2*num_part_per_dim*num_part_per_dim));
-	cudaMalloc((void **) &d_neighbour_a, sizeof(int) * num_particles * (2*num_part_per_dim*num_part_per_dim));
-	cudaMalloc((void **) &d_neighbour_b, sizeof(int) * num_particles * (2*num_part_per_dim*num_part_per_dim));
-	cudaMalloc((void **) &d_num_neighbours, sizeof(int) * num_particles);
+	cudaMalloc((void **) &d_pot_energy_arr, sizeof(double) * (x+2)*(y+2));
+	cudaMalloc((void **) &d_cell_count, sizeof(int) * (x+2)*(y+2));
+	cudaMallocHost((void **) &h_cell_count, sizeof(int)* (x+2)*(y+2));
+	cudaMalloc((void **) &d_cell_part_ids, sizeof(int) *(x+2)*(y+2)*2*num_part_per_dim*num_part_per_dim);
+	cudaMallocHost((void **) &h_cell_part_ids, sizeof(int)*(x+2)*(y+2)*2*num_part_per_dim*num_part_per_dim);
 	CUDAErrorCheck();
 
-	cudaMemcpy(d_part_i, particles.cell_i, sizeof(int)*num_particles, cudaMemcpyHostToDevice);
-	cudaMemcpy(d_part_j, particles.cell_j, sizeof(int)*num_particles, cudaMemcpyHostToDevice);
+	for (int i = 0; i < x+2; i++) {
+		for (int j = 0; j < y+2; j++) {
+			h_cell_count[(i*(y+2)) + j] = cells[i][j].count;
+			for (int k = 0; k < cells[i][j].count; k++) {
+				h_cell_part_ids[(i*(y+2)*2*num_part_per_dim*num_part_per_dim) + (j*2*num_part_per_dim*num_part_per_dim) + k] = cells[i][j].part_ids[k];
+			}
+		}
+	}
+
+	cudaMemcpy(d_cell_count, h_cell_count, sizeof(int) * (x+2)*(y+2), cudaMemcpyHostToDevice);
+	cudaMemcpy(d_cell_part_ids, h_cell_part_ids, sizeof(int) *(x+2)*(y+2)*2*num_part_per_dim*num_part_per_dim, cudaMemcpyHostToDevice);
 	cudaMemcpy(d_part_x, particles.x, sizeof(double)*num_particles, cudaMemcpyHostToDevice);
 	cudaMemcpy(d_part_y, particles.y, sizeof(double)*num_particles, cudaMemcpyHostToDevice);
 	// cudaMemcpy(d_part_vx, particles.vx, sizeof(double)*num_particles, cudaMemcpyHostToDevice);
@@ -301,8 +288,6 @@ int main(int argc, char *argv[]) {
 	comp_accel();
 	CUDAErrorCheck();
 
-	cudaMemcpy(particles.cell_i, d_part_i, sizeof(int)*num_particles, cudaMemcpyDeviceToHost);
-	cudaMemcpy(particles.cell_j, d_part_j, sizeof(int)*num_particles, cudaMemcpyDeviceToHost);
 	cudaMemcpy(particles.x, d_part_x, sizeof(double)*num_particles, cudaMemcpyDeviceToHost);
 	cudaMemcpy(particles.y, d_part_y, sizeof(double)*num_particles, cudaMemcpyDeviceToHost);
 	cudaMemcpy(particles.ax, d_part_ax, sizeof(double)*num_particles, cudaMemcpyDeviceToHost);
@@ -319,8 +304,6 @@ int main(int argc, char *argv[]) {
 	double t;
 	for (t = 0.0; t < t_end; t+=dt, iters++) {
 		// move particles half a time step
-		cudaMemcpy(d_part_i, particles.cell_i, sizeof(int)*num_particles, cudaMemcpyHostToDevice);
-		cudaMemcpy(d_part_j, particles.cell_j, sizeof(int)*num_particles, cudaMemcpyHostToDevice);
 		cudaMemcpy(d_part_x, particles.x, sizeof(double)*num_particles, cudaMemcpyHostToDevice);
 		cudaMemcpy(d_part_y, particles.y, sizeof(double)*num_particles, cudaMemcpyHostToDevice);
 		cudaMemcpy(d_part_ax, particles.ax, sizeof(double)*num_particles, cudaMemcpyHostToDevice);
@@ -333,8 +316,6 @@ int main(int argc, char *argv[]) {
 		int grid_size = num_particles / block_size;
 		move_particles<<<grid_size,block_size>>>(d_part_x, d_part_y, d_part_ax, d_part_ay, d_part_vx, d_part_vy, num_particles, dt, dth);
 		
-		cudaMemcpy(particles.cell_i, d_part_i, sizeof(int)*num_particles, cudaMemcpyDeviceToHost);
-		cudaMemcpy(particles.cell_j, d_part_j, sizeof(int)*num_particles, cudaMemcpyDeviceToHost);
 		cudaMemcpy(particles.x, d_part_x, sizeof(double)*num_particles, cudaMemcpyDeviceToHost);
 		cudaMemcpy(particles.y, d_part_y, sizeof(double)*num_particles, cudaMemcpyDeviceToHost);
 		cudaMemcpy(particles.ax, d_part_ax, sizeof(double)*num_particles, cudaMemcpyDeviceToHost);
@@ -349,9 +330,15 @@ int main(int argc, char *argv[]) {
 		// update pointers (because the previous operation might break boundary cell lists)
 		apply_boundary();
 		
+		for (int i = 0; i < x+2; i++) {
+		for (int j = 0; j < y+2; j++) {
+			h_cell_count[(i*(y+2)) + j] = cells[i][j].count;
+			for (int k = 0; k < cells[i][j].count; k++) {
+				h_cell_part_ids[(i*(y+2)*2*num_part_per_dim*num_part_per_dim) + (j*2*num_part_per_dim*num_part_per_dim) + k] = cells[i][j].part_ids[k];
+			}
+		}
+	}
 		// compute acceleration for each particle and calculate potential energy
-		cudaMemcpy(d_part_i, particles.cell_i, sizeof(int)*num_particles, cudaMemcpyHostToDevice);
-		cudaMemcpy(d_part_j, particles.cell_j, sizeof(int)*num_particles, cudaMemcpyHostToDevice);
 		cudaMemcpy(d_part_x, particles.x, sizeof(double)*num_particles, cudaMemcpyHostToDevice);
 		cudaMemcpy(d_part_y, particles.y, sizeof(double)*num_particles, cudaMemcpyHostToDevice);
 		// cudaMemcpy(d_part_ax, particles.ax, sizeof(double)*num_particles, cudaMemcpyHostToDevice);
@@ -362,8 +349,6 @@ int main(int argc, char *argv[]) {
 
 		potential_energy = comp_accel();
 		CUDAErrorCheck();
-		cudaMemcpy(particles.cell_i, d_part_i, sizeof(int)*num_particles, cudaMemcpyDeviceToHost);
-		cudaMemcpy(particles.cell_j, d_part_j, sizeof(int)*num_particles, cudaMemcpyDeviceToHost);
 		cudaMemcpy(particles.x, d_part_x, sizeof(double)*num_particles, cudaMemcpyDeviceToHost);
 		cudaMemcpy(particles.y, d_part_y, sizeof(double)*num_particles, cudaMemcpyDeviceToHost);
 		cudaMemcpy(particles.ax, d_part_ax, sizeof(double)*num_particles, cudaMemcpyDeviceToHost);

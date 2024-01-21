@@ -51,6 +51,7 @@ double * d_part_x, * d_part_y, * d_part_ax, * d_part_ay, * d_part_vx, * d_part_v
 int * part_neighbour_list, * d_part_neighbour_list, * d_part_i, * d_part_j;
 int * d_num_neighbours, * neighbour_a, * neighbour_b, * d_neighbour_a, * d_neighbour_b;
 double * pot_energy_arr, * d_pot_energy_arr;
+int * h_cell_count, * d_cell_count, * h_cell_part_ids, * d_cell_part_ids;
 
 int part_pair_size;
 
@@ -74,8 +75,6 @@ void add_particle(struct cell_list * cell, int part_id, int i, int j) {
 	}
 	cell->part_ids[cell->count] = part_id;
 	cell->count++; 
-	particles.cell_i[part_id] = i;
-	particles.cell_j[part_id] = j;
 }
 
 /**
