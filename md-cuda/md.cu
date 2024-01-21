@@ -20,10 +20,10 @@ void CUDAErrorCheck() {
 }
 
 
-__global__ void cuda_comp_accel(int * d_part_neighbour_list, int * d_num_neighbours, int * d_neighbour_a, int * d_neighbour_b, double * d_part_x, double * d_part_y,
+__global__ void cuda_comp_accel(int * d_part_neighbour_list, int * d_neighbour_a, int * d_neighbour_b, double * d_part_x, double * d_part_y,
 								double * d_part_ax, double * d_part_ay, int * d_part_i, int * d_part_j, double * d_pot_energy_arr,
 								double cell_size, double r_cut_off, double r_cut_off_2,
-								double Duc, double Uc, int num_part_per_dim) {
+								double Duc, double Uc, int num_particles, int num_part_per_dim) {
 	int p = blockIdx.x * blockDim.x + threadIdx.x;
 	
 	int i = d_part_i[p];
@@ -125,9 +125,9 @@ double comp_accel() {
 
 	int block_size = 256;
 	int grid_size = num_particles / block_size;
-	cuda_comp_accel<<<grid_size,block_size>>>(d_part_neighbour_list, d_num_neighbours, d_neighbour_a, d_neighbour_b, d_part_x, d_part_y, d_part_ax, d_part_ay,
+	cuda_comp_accel<<<grid_size,block_size>>>(d_part_neighbour_list, d_neighbour_a, d_neighbour_b, d_part_x, d_part_y, d_part_ax, d_part_ay,
 												d_part_i, d_part_j, d_pot_energy_arr, cell_size,
-												r_cut_off, r_cut_off_2, Duc, Uc, num_part_per_dim);
+												r_cut_off, r_cut_off_2, Duc, Uc, num_particles, num_part_per_dim);
 	CUDAErrorCheck();
 	cudaMemcpy(pot_energy_arr, d_pot_energy_arr, sizeof(double) * num_particles, cudaMemcpyDeviceToHost);
 	cudaDeviceSynchronize();
@@ -297,6 +297,7 @@ int main(int argc, char *argv[]) {
 	cudaDeviceSynchronize();
 
 	comp_accel();
+	CUDAErrorCheck();
 
 	cudaMemcpy(particles.cell_i, d_part_i, sizeof(int)*num_particles, cudaMemcpyDeviceToHost);
 	cudaMemcpy(particles.cell_j, d_part_j, sizeof(int)*num_particles, cudaMemcpyDeviceToHost);
@@ -358,7 +359,7 @@ int main(int argc, char *argv[]) {
 		cudaDeviceSynchronize();
 
 		potential_energy = comp_accel();
-
+		CUDAErrorCheck();
 		cudaMemcpy(particles.cell_i, d_part_i, sizeof(int)*num_particles, cudaMemcpyDeviceToHost);
 		cudaMemcpy(particles.cell_j, d_part_j, sizeof(int)*num_particles, cudaMemcpyDeviceToHost);
 		cudaMemcpy(particles.x, d_part_x, sizeof(double)*num_particles, cudaMemcpyDeviceToHost);
