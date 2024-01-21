@@ -51,7 +51,7 @@ extern struct cell_list ** cells;
 extern struct particle_t particles;
 extern double * d_part_x, * d_part_y, * d_part_ax, * d_part_ay,
 				* d_part_vx, * d_part_vy;
-extern double * pot_energy_arr, * d_pot_energy_arr;
+extern double * pot_energy_arr, * d_pot_energy_arr, * h_kinetic_arr, * d_kinetic_arr;
 extern int * h_cell_count, * d_cell_count, * h_cell_part_ids, * d_cell_part_ids;
 
 void add_particle(struct cell_list * list, int part_id, int i, int j);

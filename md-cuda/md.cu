@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 // #include <math.h>
+#include <sys/time.h>
 #include <time.h>
 #include <cuda.h>
 #include <cuda_runtime.h>
@@ -10,6 +11,13 @@
 #include "data.h"
 #include "setup.h"
 #include "vtk.h"
+
+struct timeval t;
+
+double get_time() {
+  gettimeofday(&t, NULL);
+  return t.tv_sec + (1e-6 * t.tv_usec);
+}
 
 void CUDAErrorCheck() {
     cudaError_t error = cudaGetLastError();
@@ -196,6 +204,19 @@ void update_cells() {
 	}
 }
 
+__global__ void cuda_update_velocity(int num_particles, double * d_kinetic_arr, double * d_part_ax, double * d_part_ay, double * d_part_vx, double * d_part_vy, double dth) {
+	int p = blockIdx.x * blockDim.x + threadIdx.x;
+
+	if (p < num_particles) {
+			// update velocity again by half time to obtain v(t + Dt)
+			d_part_vx[p] += dth * d_part_ax[p];
+			d_part_vy[p] += dth * d_part_ay[p];
+
+			// calculate the kinetic energy by adding up the squares of the velocities in each dim
+			d_kinetic_arr[p] = (d_part_vx[p] * d_part_vx[p]) + (d_part_vy[p] * d_part_vy[p]);
+	}
+}
+
 /**
  * @brief This updates the velocity of particles for the whole time step (i.e. adds the acceleration for another
  *        half step, since its already done half a time step in the move_particles routine). Additionally, this
@@ -205,16 +226,19 @@ void update_cells() {
  */
 double update_velocity() {
 	double kinetic_energy = 0.0;
+	cudaMemset(d_kinetic_arr, 0.0, sizeof(double)*num_particles);
 
+	int block_size = 256;
+	int grid_size = num_particles / block_size;
+	cuda_update_velocity<<<grid_size,block_size>>>(num_particles, d_kinetic_arr, d_part_ax, d_part_ay, d_part_vx, d_part_vy, dth);
+	CUDAErrorCheck();
+	
+	cudaMemcpy(h_kinetic_arr, d_kinetic_arr, sizeof(double)*num_particles, cudaMemcpyDeviceToHost);
+	cudaDeviceSynchronize();
+	
 	for (int p = 0; p < num_particles; p++) {
-		// update velocity again by half time to obtain v(t + Dt)
-		particles.vx[p] += dth * particles.ax[p];
-		particles.vy[p] += dth * particles.ay[p];
-
-		// calculate the kinetic energy by adding up the squares of the velocities in each dim
-		kinetic_energy += (particles.vx[p] * particles.vx[p]) + (particles.vy[p] * particles.vy[p]);
+		kinetic_energy += h_kinetic_arr[p];
 	}
-
 	// KE = (1/2)mv^2
 	kinetic_energy *= (0.5 / num_particles);
 	return kinetic_energy;
@@ -228,8 +252,7 @@ double update_velocity() {
  * @return int The exit code of the application
  */
 int main(int argc, char *argv[]) {
-	cudaEvent_t start, stop;
-    float gpu_time;
+	double time = get_time();
 
 	// Set default parameters
 	set_defaults();
@@ -240,20 +263,11 @@ int main(int argc, char *argv[]) {
 
 	if (verbose) print_opts();
 	
-	// create events for time profiling
-    cudaEventCreate(&start);
-    cudaEventCreate(&stop);
-
-    // start the event timer
-    cudaEventRecord(start, 0);
-
 	// set up problem
 	problem_setup();
 
 	// apply boundary condition (i.e. update pointers on the boundarys to loop periodically)
 	apply_boundary();
-
-	pot_energy_arr = (double *) malloc(sizeof(double) * (x+2)*(y+2));
 	
 	cudaMalloc((void **) &d_part_x, sizeof(double) * num_particles);
 	cudaMalloc((void **) &d_part_y, sizeof(double) * num_particles);
@@ -261,7 +275,10 @@ int main(int argc, char *argv[]) {
 	cudaMalloc((void **) &d_part_ay, sizeof(double) * num_particles);
 	cudaMalloc((void **) &d_part_vx, sizeof(double) * num_particles);
 	cudaMalloc((void **) &d_part_vy, sizeof(double) * num_particles);
+	cudaMallocHost((void **) &h_kinetic_arr, sizeof(double) * num_particles);
+	cudaMalloc((void **) &d_kinetic_arr, sizeof(double) * num_particles);
 	cudaMalloc((void **) &d_pot_energy_arr, sizeof(double) * (x+2)*(y+2));
+	cudaMallocHost((void **) &pot_energy_arr, sizeof(double) * (x+2)*(y+2));
 	cudaMalloc((void **) &d_cell_count, sizeof(int) * (x+2)*(y+2));
 	cudaMallocHost((void **) &h_cell_count, sizeof(int)* (x+2)*(y+2));
 	cudaMalloc((void **) &d_cell_part_ids, sizeof(int) *(x+2)*(y+2)*2*num_part_per_dim*num_part_per_dim);
@@ -281,20 +298,14 @@ int main(int argc, char *argv[]) {
 	cudaMemcpy(d_cell_part_ids, h_cell_part_ids, sizeof(int) *(x+2)*(y+2)*2*num_part_per_dim*num_part_per_dim, cudaMemcpyHostToDevice);
 	cudaMemcpy(d_part_x, particles.x, sizeof(double)*num_particles, cudaMemcpyHostToDevice);
 	cudaMemcpy(d_part_y, particles.y, sizeof(double)*num_particles, cudaMemcpyHostToDevice);
-	// cudaMemcpy(d_part_vx, particles.vx, sizeof(double)*num_particles, cudaMemcpyHostToDevice);
-	// cudaMemcpy(d_part_vy, particles.vy, sizeof(double)*num_particles, cudaMemcpyHostToDevice);
+	cudaMemcpy(d_part_vx, particles.vx, sizeof(double)*num_particles, cudaMemcpyHostToDevice);
+	cudaMemcpy(d_part_vy, particles.vy, sizeof(double)*num_particles, cudaMemcpyHostToDevice);
 	cudaDeviceSynchronize();
 
 	comp_accel();
 	CUDAErrorCheck();
 
-	cudaMemcpy(particles.x, d_part_x, sizeof(double)*num_particles, cudaMemcpyDeviceToHost);
-	cudaMemcpy(particles.y, d_part_y, sizeof(double)*num_particles, cudaMemcpyDeviceToHost);
-	cudaMemcpy(particles.ax, d_part_ax, sizeof(double)*num_particles, cudaMemcpyDeviceToHost);
-	cudaMemcpy(particles.ay, d_part_ay, sizeof(double)*num_particles, cudaMemcpyDeviceToHost);
-	// cudaMemcpy(particles.vx, d_part_vx, sizeof(double)*num_particles, cudaMemcpyDeviceToHost);
-	// cudaMemcpy(particles.vy, d_part_vy, sizeof(double)*num_particles, cudaMemcpyDeviceToHost);
-	cudaDeviceSynchronize();
+	
 
 
 	double potential_energy = 0.0;
@@ -304,13 +315,6 @@ int main(int argc, char *argv[]) {
 	double t;
 	for (t = 0.0; t < t_end; t+=dt, iters++) {
 		// move particles half a time step
-		cudaMemcpy(d_part_x, particles.x, sizeof(double)*num_particles, cudaMemcpyHostToDevice);
-		cudaMemcpy(d_part_y, particles.y, sizeof(double)*num_particles, cudaMemcpyHostToDevice);
-		cudaMemcpy(d_part_ax, particles.ax, sizeof(double)*num_particles, cudaMemcpyHostToDevice);
-		cudaMemcpy(d_part_ay, particles.ay, sizeof(double)*num_particles, cudaMemcpyHostToDevice);
-		cudaMemcpy(d_part_vx, particles.vx, sizeof(double)*num_particles, cudaMemcpyHostToDevice);
-		cudaMemcpy(d_part_vy, particles.vy, sizeof(double)*num_particles, cudaMemcpyHostToDevice);
-	    cudaDeviceSynchronize();
 		
 		int block_size = 256;
 		int grid_size = num_particles / block_size;
@@ -331,35 +335,32 @@ int main(int argc, char *argv[]) {
 		apply_boundary();
 		
 		for (int i = 0; i < x+2; i++) {
-		for (int j = 0; j < y+2; j++) {
-			h_cell_count[(i*(y+2)) + j] = cells[i][j].count;
-			for (int k = 0; k < cells[i][j].count; k++) {
-				h_cell_part_ids[(i*(y+2)*2*num_part_per_dim*num_part_per_dim) + (j*2*num_part_per_dim*num_part_per_dim) + k] = cells[i][j].part_ids[k];
+			for (int j = 0; j < y+2; j++) {
+				h_cell_count[(i*(y+2)) + j] = cells[i][j].count;
+				for (int k = 0; k < cells[i][j].count; k++) {
+					h_cell_part_ids[(i*(y+2)*2*num_part_per_dim*num_part_per_dim) + (j*2*num_part_per_dim*num_part_per_dim) + k] = cells[i][j].part_ids[k];
+				}
 			}
 		}
-	}
+		
+		cudaMemcpy(d_cell_count, h_cell_count, sizeof(int) * (x+2)*(y+2), cudaMemcpyHostToDevice);
+		cudaMemcpy(d_cell_part_ids, h_cell_part_ids, sizeof(int) *(x+2)*(y+2)*2*num_part_per_dim*num_part_per_dim, cudaMemcpyHostToDevice);
 		// compute acceleration for each particle and calculate potential energy
 		cudaMemcpy(d_part_x, particles.x, sizeof(double)*num_particles, cudaMemcpyHostToDevice);
 		cudaMemcpy(d_part_y, particles.y, sizeof(double)*num_particles, cudaMemcpyHostToDevice);
 		// cudaMemcpy(d_part_ax, particles.ax, sizeof(double)*num_particles, cudaMemcpyHostToDevice);
 		// cudaMemcpy(d_part_ay, particles.ay, sizeof(double)*num_particles, cudaMemcpyHostToDevice);
-		// cudaMemcpy(d_part_vx, particles.vx, sizeof(double)*num_particles, cudaMemcpyHostToDevice);
-		// cudaMemcpy(d_part_vy, particles.vy, sizeof(double)*num_particles, cudaMemcpyHostToDevice);
+		cudaMemcpy(d_part_vx, particles.vx, sizeof(double)*num_particles, cudaMemcpyHostToDevice);
+		cudaMemcpy(d_part_vy, particles.vy, sizeof(double)*num_particles, cudaMemcpyHostToDevice);
 		cudaDeviceSynchronize();
 
 		potential_energy = comp_accel();
 		CUDAErrorCheck();
-		cudaMemcpy(particles.x, d_part_x, sizeof(double)*num_particles, cudaMemcpyDeviceToHost);
-		cudaMemcpy(particles.y, d_part_y, sizeof(double)*num_particles, cudaMemcpyDeviceToHost);
-		cudaMemcpy(particles.ax, d_part_ax, sizeof(double)*num_particles, cudaMemcpyDeviceToHost);
-		cudaMemcpy(particles.ay, d_part_ay, sizeof(double)*num_particles, cudaMemcpyDeviceToHost);
-		// cudaMemcpy(particles.vx, d_part_vx, sizeof(double)*num_particles, cudaMemcpyDeviceToHost);
-		// cudaMemcpy(particles.vy, d_part_vy, sizeof(double)*num_particles, cudaMemcpyDeviceToHost);
-    	cudaDeviceSynchronize();
+		
 
 		// update velocity based on the acceleration and calculate the kinetic energy
 		kinetic_energy = update_velocity();
-	
+
 		if (iters % output_freq == 0) {
 			// calculate temperature and total energy
 			double total_energy = kinetic_energy + potential_energy;
@@ -377,6 +378,9 @@ int main(int argc, char *argv[]) {
 	double final_energy = kinetic_energy + potential_energy;
 	printf("Step %8d, Time: %14.8e, Final energy: %14.8e\n", iters, t, final_energy);
     printf("Simulation complete.\n");
+
+	time = get_time() - time;
+	printf("Total time: %14.8lf seconds\n", time);
 
 	// if output is enabled, write the mesh file and the final state
 	if (!no_output) {
