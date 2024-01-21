@@ -11,7 +11,7 @@
  * 
  */
 void apply_boundary() {
-
+	MPI_Barrier(cart_comm);
 	for (int i = 0; i < sizei+2; i++) {
 		for (int j = 0; j < sizej+2; j++) {
 			for (int k = 0; k < cells[i][j].count; k++) {
@@ -34,13 +34,12 @@ void apply_boundary() {
 	// MPI_Sendrecv(&(cells[0][sizej]).size, 1, MPI_INT, west_rank, 0, &(cells[0][0]).size, 1, MPI_INT, east_rank, 0, cart_comm, MPI_STATUS_IGNORE);
 
 	// MPI_Sendrecv(&(cells.part_ids[1][0]), sizei * 2 * num_part_per_dim * num_part_per_dim, MPI_INT, north_rank, 1, &(cells.part_ids[sizej+1][0]), sizei * 2 * num_part_per_dim * num_part_per_dim, MPI_INT, south_rank, 1, cart_comm, MPI_STATUS_IGNORE);
-	MPI_Sendrecv(&(cells[1][0].count), sizei, MPI_INT, north_rank, 1, &(cells[sizej+1][0].count), sizei, MPI_INT, south_rank, 1, cart_comm, MPI_STATUS_IGNORE);
+	// MPI_Sendrecv(&(cells[1][0].count), sizei, MPI_INT, north_rank, 1, &(cells[sizej+1][0].count), sizei, MPI_INT, south_rank, 1, cart_comm, MPI_STATUS_IGNORE);
 	// MPI_Sendrecv(&(cells[1][0]).size, sizei, MPI_INT, north_rank, 1, &(cells[sizej+1][0]).size, sizei, MPI_INT, south_rank, 1, cart_comm, MPI_STATUS_IGNORE);
 
 	// MPI_Sendrecv(&(cells.part_ids[sizei][1]), sizei * 2 * num_part_per_dim * num_part_per_dim, MPI_INT, north_rank, 1, &(cells.part_ids[1][0]), sizei * 2 * num_part_per_dim * num_part_per_dim, MPI_INT, south_rank, 1, cart_comm, MPI_STATUS_IGNORE);
-	MPI_Sendrecv(&(cells[sizei][1].count), sizei, MPI_INT, north_rank, 1, &(cells[1][0].count), sizei, MPI_INT, south_rank, 1, cart_comm, MPI_STATUS_IGNORE);
+	// MPI_Sendrecv(&(cells[sizei][1].count), sizei, MPI_INT, north_rank, 1, &(cells[1][0].count), sizei, MPI_INT, south_rank, 1, cart_comm, MPI_STATUS_IGNORE);
 	// MPI_Sendrecv(&(cells[sizei][1]).size, sizei, MPI_INT, north_rank, 1, &(cells[1][0]).size, sizei, MPI_INT, south_rank, 1, cart_comm, MPI_STATUS_IGNORE);
-
 	for (int i = 0; i < sizei+2; i++) {
 		for (int j = 0; j < sizej+2; j++) {
 			for (int k = 0; k < cells[i][j].count; k++) {
@@ -48,6 +47,7 @@ void apply_boundary() {
 			}
 		}
 	}
+	MPI_Barrier(cart_comm);
 
 	// for (int j = 1; j < y+1; j++) {
 	// 	cells[0][j].part_ids = cells[x][j].part_ids;
