@@ -37,7 +37,7 @@ __global__ void cuda_comp_accel(int x, int y, double * d_part_x, double * d_part
 	int i = blockIdx.y * blockDim.y + threadIdx.y + 1;
 	int j = blockIdx.x * blockDim.x + threadIdx.x + 1;
 
-	if (i > 0 && j > 0 && i < (x+1) && j < (y+1)) {
+	if (i > 0 && j > 0 && i < (x+2) && j < (y+2)) {
 		for (int k = 0; k < d_cell_count[(i*(y+2)) + j]; k++) {
 			int p = d_cell_part_ids[(i*(y+2)*2*num_part_per_dim*num_part_per_dim) + (j*2*num_part_per_dim*num_part_per_dim) + k];
 			// Compare each particle with all particles in the 9 cells
@@ -305,6 +305,7 @@ int main(int argc, char *argv[]) {
 	cudaDeviceSynchronize();
 
 	comp_accel();
+	cudaDeviceSynchronize();
 	CUDAErrorCheck();
 
 	
@@ -324,10 +325,10 @@ int main(int argc, char *argv[]) {
 		
 		cudaMemcpy(particles.x, d_part_x, sizeof(double)*num_particles, cudaMemcpyDeviceToHost);
 		cudaMemcpy(particles.y, d_part_y, sizeof(double)*num_particles, cudaMemcpyDeviceToHost);
-		cudaMemcpy(particles.ax, d_part_ax, sizeof(double)*num_particles, cudaMemcpyDeviceToHost);
-		cudaMemcpy(particles.ay, d_part_ay, sizeof(double)*num_particles, cudaMemcpyDeviceToHost);
-		cudaMemcpy(particles.vx, d_part_vx, sizeof(double)*num_particles, cudaMemcpyDeviceToHost);
-		cudaMemcpy(particles.vy, d_part_vy, sizeof(double)*num_particles, cudaMemcpyDeviceToHost);
+		// cudaMemcpy(particles.ax, d_part_ax, sizeof(double)*num_particles, cudaMemcpyDeviceToHost);
+		// cudaMemcpy(particles.ay, d_part_ay, sizeof(double)*num_particles, cudaMemcpyDeviceToHost);
+		// cudaMemcpy(particles.vx, d_part_vx, sizeof(double)*num_particles, cudaMemcpyDeviceToHost);
+		// cudaMemcpy(particles.vy, d_part_vy, sizeof(double)*num_particles, cudaMemcpyDeviceToHost);
     	cudaDeviceSynchronize();
 
 		// update cell lists (i.e. move any particles between cell lists if required)
@@ -352,8 +353,8 @@ int main(int argc, char *argv[]) {
 		cudaMemcpy(d_part_y, particles.y, sizeof(double)*num_particles, cudaMemcpyHostToDevice);
 		// cudaMemcpy(d_part_ax, particles.ax, sizeof(double)*num_particles, cudaMemcpyHostToDevice);
 		// cudaMemcpy(d_part_ay, particles.ay, sizeof(double)*num_particles, cudaMemcpyHostToDevice);
-		cudaMemcpy(d_part_vx, particles.vx, sizeof(double)*num_particles, cudaMemcpyHostToDevice);
-		cudaMemcpy(d_part_vy, particles.vy, sizeof(double)*num_particles, cudaMemcpyHostToDevice);
+		// cudaMemcpy(d_part_vx, particles.vx, sizeof(double)*num_particles, cudaMemcpyHostToDevice);
+		// cudaMemcpy(d_part_vy, particles.vy, sizeof(double)*num_particles, cudaMemcpyHostToDevice);
 		cudaDeviceSynchronize();
 
 		potential_energy = comp_accel();
