@@ -92,21 +92,18 @@ __global__ void cuda_comp_accel(int x, int y, double * d_part_x, double * d_part
  */
 double comp_accel() {
 	// zero acceleration for every particle
-	for (int p = 0; p < num_particles; p++) {
-		particles.ax[p] = 0.0;
-		particles.ay[p] = 0.0;
-	}
+	cudaMemset(d_part_ax, 0.0, sizeof(double) * num_particles);
+	cudaMemset(d_part_ay, 0.0, sizeof(double) * num_particles);
 
 	double pot_energy = 0.0;
 	cudaMemset(d_pot_energy_arr, 0.0, sizeof(double) * (x+2)*(y+2));
-	cudaMemcpy(d_part_ax, particles.ax, sizeof(double)*num_particles, cudaMemcpyHostToDevice);
-	cudaMemcpy(d_part_ay, particles.ay, sizeof(double)*num_particles, cudaMemcpyHostToDevice);
+	
 	CUDAErrorCheck();
 	cudaDeviceSynchronize();
 
 	int BLOCK_SIZE = 32;
-	unsigned int grid_rows = ((x) + BLOCK_SIZE - 1) / BLOCK_SIZE;
-    unsigned int grid_cols = ((y) + BLOCK_SIZE - 1) / BLOCK_SIZE;
+	unsigned int grid_rows = ((x+2) + BLOCK_SIZE - 1) / BLOCK_SIZE;
+    unsigned int grid_cols = ((y+2) + BLOCK_SIZE - 1) / BLOCK_SIZE;
     dim3 dimGrid(grid_cols, grid_rows);
     dim3 dimBlock(BLOCK_SIZE, BLOCK_SIZE);
 
@@ -117,12 +114,12 @@ double comp_accel() {
 	cudaMemcpy(pot_energy_arr, d_pot_energy_arr, sizeof(double) * (x+2)*(y+2), cudaMemcpyDeviceToHost);
 	cudaDeviceSynchronize();
 
-	int count = 0;
+	// int count = 0;
 	for (int i = 0; i < (x+2)*(y+2); i++) {
 		pot_energy += pot_energy_arr[i];
-		if(pot_energy_arr[i] == 0.0) {
-			count++;
-		}
+		// if(pot_energy_arr[i] == 0.0) {
+		// 	count++;
+		// }
 	}
 	// printf("count %d\n", count);
 
@@ -302,6 +299,8 @@ int main(int argc, char *argv[]) {
 	cudaMemcpy(d_part_y, particles.y, sizeof(double)*num_particles, cudaMemcpyHostToDevice);
 	cudaMemcpy(d_part_vx, particles.vx, sizeof(double)*num_particles, cudaMemcpyHostToDevice);
 	cudaMemcpy(d_part_vy, particles.vy, sizeof(double)*num_particles, cudaMemcpyHostToDevice);
+	cudaMemcpy(d_part_ax, particles.ax, sizeof(double)*num_particles, cudaMemcpyHostToDevice);
+	cudaMemcpy(d_part_ay, particles.ay, sizeof(double)*num_particles, cudaMemcpyHostToDevice);
 	cudaDeviceSynchronize();
 
 	comp_accel();
