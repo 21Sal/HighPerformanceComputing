@@ -252,16 +252,18 @@ double update_velocity() {
  * @return int The exit code of the application
  */
 int main(int argc, char *argv[]) {
-	double time = get_time();
 
 	// Set default parameters
 	set_defaults();
 	// parse the arguments
 	parse_args(argc, argv);
+	
 	// call set up to update defaults
 	setup();
 
 	if (verbose) print_opts();
+	
+	double time = get_time();
 	
 	// set up problem
 	problem_setup();
@@ -342,7 +344,7 @@ int main(int argc, char *argv[]) {
 				}
 			}
 		}
-		
+
 		cudaMemcpy(d_cell_count, h_cell_count, sizeof(int) * (x+2)*(y+2), cudaMemcpyHostToDevice);
 		cudaMemcpy(d_cell_part_ids, h_cell_part_ids, sizeof(int) *(x+2)*(y+2)*2*num_part_per_dim*num_part_per_dim, cudaMemcpyHostToDevice);
 		// compute acceleration for each particle and calculate potential energy

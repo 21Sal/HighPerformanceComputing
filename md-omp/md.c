@@ -200,11 +200,12 @@ int main(int argc, char *argv[]) {
 	// parse the arguments
 	parse_args(argc, argv);
 
-	double time = get_time();
 	// call set up to update defaults
 	setup();
 
 	if (verbose) print_opts();
+	
+	double time = get_time();
 	
 	// set up problem
 	problem_setup();
