@@ -54,6 +54,8 @@ extern struct particle_t particles;
 extern double * d_part_x, * d_part_y, * d_part_ax, * d_part_ay,
 				* d_part_vx, * d_part_vy;
 extern int * part_neighbour_list, * d_part_neighbour_list, * d_part_i, * d_part_j;
+extern int * d_num_neighbours, * neighbour_a, * neighbour_b, * d_neighbour_a, * d_neighbour_b;
+extern double * pot_energy_arr, * d_pot_energy_arr;
 
 void add_particle(struct cell_list * list, int part_id, int i, int j);
 void remove_particle(struct cell_list * list, int idx);

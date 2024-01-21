@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <math.h>
+// #include <math.h>
 #include <unistd.h>
 #include <string.h>
 
@@ -49,6 +49,8 @@ struct particle_t particles;
 
 double * d_part_x, * d_part_y, * d_part_ax, * d_part_ay, * d_part_vx, * d_part_vy;
 int * part_neighbour_list, * d_part_neighbour_list, * d_part_i, * d_part_j;
+int * d_num_neighbours, * neighbour_a, * neighbour_b, * d_neighbour_a, * d_neighbour_b;
+double * pot_energy_arr, * d_pot_energy_arr;
 
 int part_pair_size;
 
@@ -60,6 +62,7 @@ int part_pair_size;
  */
 void add_particle(struct cell_list * cell, int part_id, int i, int j) {
 	if (cell->count == cell->size) {
+		printf("REALLOC cells[%d][%d]\n",i,j);
 		cell->size *= growth_factor;
 		int * tmp = (int *) realloc(cell->part_ids, sizeof(int) * cell->size);
 		if (!tmp) {

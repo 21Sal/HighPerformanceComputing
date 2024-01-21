@@ -1,9 +1,9 @@
 #include <stdlib.h>
 #include <time.h>
-#include <math.h>
+// #include <math.h>
 #include <stdio.h> 
 #include <cuda.h>
-#include<cuda_runtime.h>
+#include <cuda_runtime.h>
 
 #include "setup.h"
 #include "data.h"
@@ -60,11 +60,9 @@ void problem_setup() {
 	particles.num_neighbours = (int *) malloc(sizeof(int) * num_particles);
 
 	part_neighbour_list = (int *) malloc(sizeof(int *) * num_particles * (2*num_part_per_dim*num_part_per_dim));
-	if (!part_neighbour_list) {
-		fprintf(stderr, "Malloc failes part_neighbour_list");
-		exit(1);
-	}
-	
+	neighbour_a = (int *) malloc(sizeof(int *) * num_particles * (2*num_part_per_dim*num_part_per_dim));
+	neighbour_b = (int *) malloc(sizeof(int *) * num_particles * (2*num_part_per_dim*num_part_per_dim));
+
 	double v_sum_x = 0.0;
 	double v_sum_y = 0.0;
 

@@ -1,6 +1,5 @@
 CC=nvcc
 CFLAGS=-O3
-LIBFLAGS=-lm
 
 OBJDIR = obj
 
@@ -15,7 +14,7 @@ obj/%.o: %.cu
 	$(CC) -c -o $@ $< $(CFLAGS) 
 
 md: $(OBJ)
-	$(CC) -o $@ $^ $(CFLAGS) $(LIBFLAGS) 
+	$(CC) -o $@ $^ $(CFLAGS)
 
 clean:
 	rm -Rf $(OBJDIR)
