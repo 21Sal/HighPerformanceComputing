@@ -57,8 +57,14 @@ void problem_setup() {
 	particles.vy = (double *) malloc(sizeof(double) * num_particles);
 	particles.cell_i = (int *) malloc(sizeof(int) * num_particles);
 	particles.cell_j = (int *) malloc(sizeof(int) * num_particles);
+	particles.num_neighbours = (int *) malloc(sizeof(int) * num_particles);
 
-
+	part_neighbour_list = (int *) malloc(sizeof(int *) * num_particles * (2*num_part_per_dim*num_part_per_dim));
+	if (!part_neighbour_list) {
+		fprintf(stderr, "Malloc failes part_neighbour_list");
+		exit(1);
+	}
+	
 	double v_sum_x = 0.0;
 	double v_sum_y = 0.0;
 

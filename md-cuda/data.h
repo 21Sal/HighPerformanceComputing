@@ -7,6 +7,7 @@ struct particle_t {
 	double * ax, * ay; // acceleration
 	double * vx, * vy; // velocity
 	int * cell_i, * cell_j;
+	int * num_neighbours;
 };
 
 // list for a cell, with a head
@@ -52,8 +53,7 @@ extern struct cell_list ** cells;
 extern struct particle_t particles;
 extern double * d_part_x, * d_part_y, * d_part_ax, * d_part_ay,
 				* d_part_vx, * d_part_vy;
-extern int * d_cell_count, * d_cell_part_ids, * d_part_i, * d_part_j;
-extern int part_pair_size;
+extern int * part_neighbour_list, * d_part_neighbour_list, * d_part_i, * d_part_j;
 
 void add_particle(struct cell_list * list, int part_id, int i, int j);
 void remove_particle(struct cell_list * list, int idx);
