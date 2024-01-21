@@ -26,45 +26,47 @@ __global__ void cuda_comp_accel(int * d_part_neighbour_list, int * d_neighbour_a
 								double Duc, double Uc, int num_particles, int num_part_per_dim) {
 	int p = blockIdx.x * blockDim.x + threadIdx.x;
 	
-	int i = d_part_i[p];
-	int j = d_part_j[p];
+	if(p < num_particles) {
+		int i = d_part_i[p];
+		int j = d_part_j[p];
 
 
-	for (int n = 0; n < 2*num_part_per_dim*num_part_per_dim; n++) {
-		int q = d_part_neighbour_list[(p*2*num_part_per_dim*num_part_per_dim) + n];
-		if (q < 0) {
-			continue;
-		}
-		int iq = d_neighbour_a[(p*2*num_part_per_dim*num_part_per_dim) + n];
-		int jq = d_neighbour_b[(p*2*num_part_per_dim*num_part_per_dim) + n];
-		// since particles are stored relative to their cell, calculate the
-		// actual x and y coordinates.
+		for (int n = 0; n < 2*num_part_per_dim*num_part_per_dim; n++) {
+			int q = d_part_neighbour_list[(p*2*num_part_per_dim*num_part_per_dim) + n];
+			if (q < 0) {
+				continue;
+			}
+			int iq = d_neighbour_a[(p*2*num_part_per_dim*num_part_per_dim) + n];
+			int jq = d_neighbour_b[(p*2*num_part_per_dim*num_part_per_dim) + n];
+			// since particles are stored relative to their cell, calculate the
+			// actual x and y coordinates.
 
-		double p_real_x = ((i-1) * cell_size) + d_part_x[p];
-		double p_real_y = ((j-1) * cell_size) + d_part_y[p];
-		double q_real_x = ((iq-1) * cell_size) + d_part_x[q];
-		double q_real_y = ((jq-1) * cell_size) + d_part_y[q];
-		
-		// calculate distance in x and y, then absolute distance
-		double dx = p_real_x - q_real_x;
-		double dy = p_real_y - q_real_y;
-		double r_2 = dx*dx + dy*dy;
-		
-		// if distance less than cut off, calculate force and 
-		// use this to calculate acceleration in each dimension
-		// calculate potential energy of each particle at the same time
-		if (r_2 < r_cut_off_2) {
-			double r_2_inv = 1.0 / r_2;
-			double r_6_inv = r_2_inv * r_2_inv * r_2_inv;
-			double f = (48.0 * r_2_inv * r_6_inv * (r_6_inv - 0.5));
-
-			d_part_ax[p] += f*dx;
-
-			d_part_ay[p] += f*dy;
+			double p_real_x = ((i-1) * cell_size) + d_part_x[p];
+			double p_real_y = ((j-1) * cell_size) + d_part_y[p];
+			double q_real_x = ((iq-1) * cell_size) + d_part_x[q];
+			double q_real_y = ((jq-1) * cell_size) + d_part_y[q];
 			
-			d_pot_energy_arr[p] += 4.0 * r_6_inv * (r_6_inv - 1.0) - Uc - Duc * (sqrt(r_2) - r_cut_off);
-			// printf("d_pot %lf, r_6_inv %lf, Uc %lf, Duc %lf\n", d_pot_energy_arr[p], r_6_inv, Uc, Duc);
-			// printf("p %d q %d dx %lf dy %lf\n", p, q, dx, dy);
+			// calculate distance in x and y, then absolute distance
+			double dx = p_real_x - q_real_x;
+			double dy = p_real_y - q_real_y;
+			double r_2 = dx*dx + dy*dy;
+			
+			// if distance less than cut off, calculate force and 
+			// use this to calculate acceleration in each dimension
+			// calculate potential energy of each particle at the same time
+			if (r_2 < r_cut_off_2) {
+				double r_2_inv = 1.0 / r_2;
+				double r_6_inv = r_2_inv * r_2_inv * r_2_inv;
+				double f = (48.0 * r_2_inv * r_6_inv * (r_6_inv - 0.5));
+
+				d_part_ax[p] += f*dx;
+
+				d_part_ay[p] += f*dy;
+				
+				d_pot_energy_arr[p] += 4.0 * r_6_inv * (r_6_inv - 1.0) - Uc - Duc * (sqrt(r_2) - r_cut_off);
+				// printf("d_pot %lf, r_6_inv %lf, Uc %lf, Duc %lf\n", d_pot_energy_arr[p], r_6_inv, Uc, Duc);
+				// printf("p %d q %d dx %lf dy %lf\n", p, q, dx, dy);
+			}
 		}
 	}
 }
