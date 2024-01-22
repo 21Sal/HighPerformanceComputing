@@ -80,7 +80,7 @@ double comp_accel() {
 	// MPI_Allreduce(MPI_IN_PLACE, &pot_energy, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 
 	// return the average potential energy (i.e. sum / number)
-	return pot_energy / num_particles;
+	return pot_energy / num_particles_per_proc;
 }
 
 /**
@@ -172,7 +172,7 @@ double update_velocity() {
 	}
 
 	// KE = (1/2)mv^2
-	kinetic_energy *= (0.5 / num_particles);
+	kinetic_energy *= (0.5 / num_particles_per_proc);
 	return kinetic_energy;
 }
 

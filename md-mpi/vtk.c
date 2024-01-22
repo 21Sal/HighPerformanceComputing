@@ -87,7 +87,7 @@ int write_vtk(char * filename, int iters, double t) {
     fprintf(f, "%d\n", iters);
     fprintf(f, "</DataArray>\n");
     fprintf(f, "</FieldData>\n");
-	fprintf(f, "<Piece NumberOfPoints=\"%d\" NumberOfVerts=\"0\" NumberOfLines=\"0\" NumberOfStrips=\"0\" NumberOfCells=\"0\">\n", num_particles);
+	fprintf(f, "<Piece NumberOfPoints=\"%d\" NumberOfVerts=\"0\" NumberOfLines=\"0\" NumberOfStrips=\"0\" NumberOfCells=\"0\">\n", num_particles_total);
 	fprintf(f, "<Points>\n");
 	fprintf(f, "<DataArray type=\"Float64\" Name=\"particles\" NumberOfComponents=\"3\" format=\"ascii\">\n");
 	for (int i = 1; i < x+1; i++) {
