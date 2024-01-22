@@ -14,23 +14,6 @@
 void apply_boundary() {
 	MPI_Request requests[10];
 
-	temp_part_x = malloc(sizeof(double) * num_particles_total);
-	temp_part_y = malloc(sizeof(double) * num_particles_total);
-	temp_part_ax = malloc(sizeof(double) * num_particles_total);
-	temp_part_ay = malloc(sizeof(double) * num_particles_total);
-	temp_part_vx = malloc(sizeof(double) * num_particles_total);
-	temp_part_vy = malloc(sizeof(double) * num_particles_total);
-
-	east_part_ids = malloc(sizeof(int)*sizei*2*num_part_per_dim*num_part_per_dim);
-	west_part_ids = malloc(sizeof(int)*sizei*2*num_part_per_dim*num_part_per_dim);
-	north_part_ids = malloc(sizeof(int)*(sizej+2)*2*num_part_per_dim*num_part_per_dim);
-	south_part_ids = malloc(sizeof(int)*(sizej+2)*2*num_part_per_dim*num_part_per_dim);
-
-	east_counts = malloc(sizeof(int)*sizei);
-	west_counts = malloc(sizeof(int)*sizei);
-	north_counts = malloc(sizeof(int)*(sizej+2));
-	south_counts = malloc(sizeof(int)*(sizej+2));
-
 	for (int j = 1; j < sizei+1; j++) {
 		for (int k = 0; k < 2*num_part_per_dim*num_part_per_dim; k++) {
 			east_part_ids[((j-1)*2*num_part_per_dim*num_part_per_dim) + k] = cells[sizei][j].part_ids[k];
@@ -104,21 +87,4 @@ void apply_boundary() {
 		cells[i][0].count = south_counts[i];
 		cells[i][sizej+1].count = north_counts[i];
 	}
-
-	free(temp_part_x);
-	free(temp_part_y);
-	free(temp_part_ax);
-	free(temp_part_ay);
-	free(temp_part_vx);
-	free(temp_part_vy);
-
-	free(east_part_ids);
-	free(west_part_ids);
-	free(north_part_ids);
-	free(south_part_ids);
-
-	free(east_counts);
-	free(west_counts);
-	free(north_counts);
-	free(south_counts);
 }
