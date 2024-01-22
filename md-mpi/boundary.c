@@ -49,12 +49,12 @@ void apply_boundary() {
 		north_counts[i] = cells[i][1].count;
 	}
 
-	MPI_IAllgather(particles.ax, num_particles_per_proc, MPI_DOUBLE, temp_part_ax, num_particles_per_proc, MPI_DOUBLE, MPI_COMM_WORLD, &request[0]);
-	MPI_IAllgather(particles.ay, num_particles_per_proc, MPI_DOUBLE, temp_part_ay, num_particles_per_proc, MPI_DOUBLE, MPI_COMM_WORLD, &request[1]);
-	MPI_IAllgather(particles.vx, num_particles_per_proc, MPI_DOUBLE, temp_part_vx, num_particles_per_proc, MPI_DOUBLE, MPI_COMM_WORLD, &request[2]);
-	MPI_IAllgather(particles.vy, num_particles_per_proc, MPI_DOUBLE, temp_part_vy, num_particles_per_proc, MPI_DOUBLE, MPI_COMM_WORLD, &request[3]);
-	MPI_IAllgather(particles.x, num_particles_per_proc, MPI_DOUBLE, temp_part_x, num_particles_per_proc, MPI_DOUBLE, MPI_COMM_WORLD, &request[4]);
-	MPI_IAllgather(particles.y, num_particles_per_proc, MPI_DOUBLE, temp_part_y, num_particles_per_proc, MPI_DOUBLE, MPI_COMM_WORLD, &request[5]);
+	MPI_IAllgather(particles.ax, num_particles_per_proc, MPI_DOUBLE, temp_part_ax, num_particles_per_proc, MPI_DOUBLE, MPI_COMM_WORLD, &requests[0]);
+	MPI_IAllgather(particles.ay, num_particles_per_proc, MPI_DOUBLE, temp_part_ay, num_particles_per_proc, MPI_DOUBLE, MPI_COMM_WORLD, &requests[1]);
+	MPI_IAllgather(particles.vx, num_particles_per_proc, MPI_DOUBLE, temp_part_vx, num_particles_per_proc, MPI_DOUBLE, MPI_COMM_WORLD, &requests[2]);
+	MPI_IAllgather(particles.vy, num_particles_per_proc, MPI_DOUBLE, temp_part_vy, num_particles_per_proc, MPI_DOUBLE, MPI_COMM_WORLD, &requests[3]);
+	MPI_IAllgather(particles.x, num_particles_per_proc, MPI_DOUBLE, temp_part_x, num_particles_per_proc, MPI_DOUBLE, MPI_COMM_WORLD, &requests[4]);
+	MPI_IAllgather(particles.y, num_particles_per_proc, MPI_DOUBLE, temp_part_y, num_particles_per_proc, MPI_DOUBLE, MPI_COMM_WORLD, &requests[5]);
 
 	MPI_Sendrecv_replace(east_part_ids, sizei*2*num_part_per_dim*num_part_per_dim, MPI_INT, east_rank, 1, east_part_ids, sizei*2*num_part_per_dim*num_part_per_dim, 
 				MPI_INT, west_rank, 1, cart_comm, MPI_STATUS_IGNORE);
@@ -89,20 +89,20 @@ void apply_boundary() {
 
 	for (int j = 1; j < sizei+1; j++) {
 		for (int k = 0; k < 2*num_part_per_dim*num_part_per_dim; k++) {
-			cells[0][j].part_ids[k] = temp_east_part_ids[((j-1)*2*num_part_per_dim*num_part_per_dim) + k];
-			cells[sizei+1][j].part_ids[k] = temp_west_part_ids[((j-1)*2*num_part_per_dim*num_part_per_dim) + k];
+			cells[0][j].part_ids[k] = east_part_ids[((j-1)*2*num_part_per_dim*num_part_per_dim) + k];
+			cells[sizei+1][j].part_ids[k] = west_part_ids[((j-1)*2*num_part_per_dim*num_part_per_dim) + k];
 		}
-		cells[0][j].count = temp_east_counts[(j-1)];
-		cells[sizei+1][j].count = temp_west_counts[(j-1)] ;
+		cells[0][j].count = east_counts[(j-1)];
+		cells[sizei+1][j].count = west_counts[(j-1)] ;
 	}
 
 	for (int i = 0; i < sizej+2; i++) {
 		for (int k = 0; k < 2*num_part_per_dim*num_part_per_dim; k++) {
-			cells[i][0].part_ids[k] = temp_south_part_ids[(i*2*num_part_per_dim*num_part_per_dim) + k];
-			cells[i][sizej+1].part_ids[k] = temp_north_part_ids[(i*2*num_part_per_dim*num_part_per_dim) + k];
+			cells[i][0].part_ids[k] = south_part_ids[(i*2*num_part_per_dim*num_part_per_dim) + k];
+			cells[i][sizej+1].part_ids[k] = north_part_ids[(i*2*num_part_per_dim*num_part_per_dim) + k];
 		}
-		cells[i][0].count = temp_south_counts[i];
-		cells[i][sizej+1].count = temp_north_counts[i];
+		cells[i][0].count = south_counts[i];
+		cells[i][sizej+1].count = north_counts[i];
 	}
 
 	free(temp_part_x);
