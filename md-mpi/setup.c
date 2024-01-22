@@ -47,14 +47,16 @@ void problem_setup() {
 	cells = alloc_2d_cell_list_array(sizei+2, sizej+2);
 	cell_part_ids_flat = malloc(sizeof(int)*(sizej+2)*(sizej+2)*2*num_part_per_dim*num_part_per_dim);
 	cell_count_flat = malloc(sizeof(int)*(sizei+2)*(sizej+2));
-	num_particles = sizej * sizei * num_part_per_dim * num_part_per_dim;
-	particles.x = malloc(sizeof(double) * num_particles);
-	particles.y = malloc(sizeof(double) * num_particles);
-	particles.ax = malloc(sizeof(double) * num_particles);
-	particles.ay = malloc(sizeof(double) * num_particles);
-	particles.vx = malloc(sizeof(double) * num_particles);
-	particles.vy = malloc(sizeof(double) * num_particles);
-	particles.part_id = malloc(sizeof(int) * num_particles);
+
+	num_particles_per_proc = sizej * sizei * num_part_per_dim * num_part_per_dim;
+	num_particles_total = x * y * num_part_per_dim * num_part_per_dim;
+
+	particles.x = malloc(sizeof(double) * num_particles_total);
+	particles.y = malloc(sizeof(double) * num_particles_total);
+	particles.ax = malloc(sizeof(double) * num_particles_total);
+	particles.ay = malloc(sizeof(double) * num_particles_total);
+	particles.vx = malloc(sizeof(double) * num_particles_total);
+	particles.vy = malloc(sizeof(double) * num_particles_total);
 	
 	for (int i = 0; i < sizei+2; i++) {
 		for (int j = 0; j < sizej+2; j++) {
@@ -71,6 +73,7 @@ void problem_setup() {
 	double v_magnitude = sqrt(3.0 * init_temp);
 
 	int p_count = 0;
+	p_offset = rank * num_particles_per_proc;
 
 	for (int i = 1; i < sizei+1; i++) {
 		for (int j = 1; j < sizej+1; j++) {
@@ -87,14 +90,14 @@ void problem_setup() {
 					double rand_vy = sin(phi);
 
 					// create the particle and add it to the current cell list.			
-					particles.x[p_count] = part_x * cell_size;
-					particles.y[p_count] = part_y * cell_size;
-					particles.vx[p_count] = rand_vx * v_magnitude;
-					particles.vy[p_count] = rand_vy * v_magnitude;
+					particles.x[p_offset + p_count] = part_x * cell_size;
+					particles.y[p_offset + p_count] = part_y * cell_size;
+					particles.vx[p_offset + p_count] = rand_vx * v_magnitude;
+					particles.vy[p_offset + p_count] = rand_vy * v_magnitude;
 					add_particle(&(cells[i][j]), p_count);
 
-					v_sum_x += particles.vx[p_count];
-					v_sum_y += particles.vy[p_count];
+					v_sum_x += particles.vx[p_offset + p_count];
+					v_sum_y += particles.vy[p_offset + p_count];
 
 					p_count++;
 				}
@@ -105,11 +108,11 @@ void problem_setup() {
 	MPI_Allreduce(MPI_IN_PLACE, &v_sum_x, 1, MPI_DOUBLE, MPI_SUM, cart_comm);
 
 	// Normalise data to make sure that the total momentum is 0.0 at the start
-	double v_avg_x = v_sum_x / num_particles;
-	double v_avg_y = v_sum_y / num_particles;
+	double v_avg_x = v_sum_x / num_particles_total;
+	double v_avg_y = v_sum_y / num_particles_total;
 
-	for (int i = 0; i < num_particles; i++) {
-		particles.vx[i] -= v_avg_x;
-		particles.vy[i] -= v_avg_y;
+	for (int i = 0; i < num_particles_per_proc; i++) {
+		particles.vx[p_offset + i] -= v_avg_x;
+		particles.vy[p_offset + i] -= v_avg_y;
 	}
 }

@@ -14,7 +14,7 @@ double r_cut_off = 2.5;
 double cell_size = 2.5;
 int x = 500;
 int y = 500;
-int num_particles;
+int num_particles_per_proc, num_particles_total, p_offset;
 
 // number of iterations, timestep duration and half-timestep duration
 int niters = 1000;

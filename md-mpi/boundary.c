@@ -11,6 +11,15 @@
  * 
  */
 void apply_boundary() {
+	
+	MPI_Allgather(&particles.ax, num_particles_per_proc, MPI_DOUBLE, particles.ax, num_particles_per_proc, MPI_DOUBLE, cart_comm);
+	MPI_Allgather(&particles.ay, num_particles_per_proc, MPI_DOUBLE, particles.ay, num_particles_per_proc, MPI_DOUBLE, cart_comm);
+	MPI_Allgather(&particles.vx, num_particles_per_proc, MPI_DOUBLE, particles.vx, num_particles_per_proc, MPI_DOUBLE, cart_comm);
+	MPI_Allgather(&particles.vy, num_particles_per_proc, MPI_DOUBLE, particles.vy, num_particles_per_proc, MPI_DOUBLE, cart_comm);
+	MPI_Allgather(&particles.x, num_particles_per_proc, MPI_DOUBLE, particles.x, num_particles_per_proc, MPI_DOUBLE, cart_comm);
+	MPI_Allgather(&particles.y, num_particles_per_proc, MPI_DOUBLE, particles.y, num_particles_per_proc, MPI_DOUBLE, cart_comm);
+
+
 	for (int i = 0; i < sizei+2; i++) {
 		for (int j = 0; j < sizej+2; j++) {
 			cell_count_flat[i*(sizej+2) + j] = cells[i][j].count;

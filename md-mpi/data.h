@@ -6,7 +6,6 @@ struct particle_t {
 	double * x, * y; // position within cell
 	double * ax, * ay; // acceleration
 	double * vx, * vy; // velocity
-	int * part_id;
 };
 
 // list for a cell, with a head
@@ -24,7 +23,7 @@ extern double r_cut_off;
 extern double cell_size;
 extern int x;
 extern int y;
-extern int num_particles;
+extern int num_particles_per_proc, num_particles_total, p_offset;
 
 // number of iterations, timestep duration and half-timestep duration
 extern int niters;

@@ -18,11 +18,11 @@
  * @return double The potential energy
  */
 double comp_accel() {
-	printf("starting comp_accel");
+	// printf("starting comp_accel");
 	// zero acceleration for every particle
-	for (int p = 0; p < num_particles; p++) {
-		particles.ax[p] = 0.0;
-		particles.ay[p] = 0.0;
+	for (int p = 0; p < num_particles_per_proc; p++) {
+		particles.ax[p_offset + p] = 0.0;
+		particles.ay[p_offset + p] = 0.0;
 	}
 
 	double pot_energy = 0.0;
@@ -36,10 +36,10 @@ double comp_accel() {
 					for (int b = -1; b <= 1; b++) {
 						for (int l = 0; l < cells[i+a][j+b].count; l++) {
 							int q = cells[i+a][j+b].part_ids[l];
-							if (p >= q) {
+							if (p == q) {
 								continue;
 							}
-							printf("in comp_accel");
+							// printf("in comp_accel");
 
 
 							// since particles are stored relative to their cell, calculate the
@@ -64,13 +64,11 @@ double comp_accel() {
 								double f = (48.0 * r_2_inv * r_6_inv * (r_6_inv - 0.5));
 
 								particles.ax[p] += f*dx;
-								particles.ax[q] -= f*dx;
 
 								particles.ay[p] += f*dy;
-								particles.ay[q] -= f*dy;
 
 
-								pot_energy += 2.0 * (4.0 * r_6_inv * (r_6_inv - 1.0) - Uc - Duc * (sqrt(r_2) - r_cut_off));
+								pot_energy += 4.0 * r_6_inv * (r_6_inv - 1.0) - Uc - Duc * (sqrt(r_2) - r_cut_off);
 							}
 						}
 					}
@@ -79,7 +77,7 @@ double comp_accel() {
 		}
 	}
 
-	MPI_Allreduce(MPI_IN_PLACE, &pot_energy, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+	// MPI_Allreduce(MPI_IN_PLACE, &pot_energy, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 
 	// return the average potential energy (i.e. sum / number)
 	return pot_energy / num_particles;
@@ -92,14 +90,14 @@ double comp_accel() {
  */
 void move_particles() {
 	// move all particles half a time step
-	for (int p = 0; p < num_particles; p++) {
+	for (int p = 0; p < num_particles_per_proc; p++) {
 		// update velocity to obtain v(t + Dt/2)
-		particles.vx[p] += dth * particles.ax[p];
-		particles.vy[p] += dth * particles.ay[p];
+		particles.vx[p_offset + p] += dth * particles.ax[p_offset + p];
+		particles.vy[p_offset + p] += dth * particles.ay[p_offset + p];
 
 		// update particle coordinates to p(t + Dt) (scaled to the cell_size)
-		particles.x[p] += (dt * particles.vx[p]);
-		particles.y[p] += (dt * particles.vy[p]);
+		particles.x[p_offset + p] += (dt * particles.vx[p_offset + p]);
+		particles.y[p_offset + p] += (dt * particles.vy[p_offset + p]);
 	}
 }
 
@@ -164,13 +162,13 @@ void update_cells() {
 double update_velocity() {
 	double kinetic_energy = 0.0;
 
-	for (int p = 0; p < num_particles; p++) {
+	for (int p = 0; p < num_particles_per_proc; p++) {
 		// update velocity again by half time to obtain v(t + Dt)
-		particles.vx[p] += dth * particles.ax[p];
-		particles.vy[p] += dth * particles.ay[p];
+		particles.vx[p_offset + p] += dth * particles.ax[p_offset + p];
+		particles.vy[p_offset + p] += dth * particles.ay[p_offset + p];
 
 		// calculate the kinetic energy by adding up the squares of the velocities in each dim
-		kinetic_energy += (particles.vx[p] * particles.vx[p]) + (particles.vy[p] * particles.vy[p]);
+		kinetic_energy += (particles.vx[p_offset + p] * particles.vx[p_offset + p]) + (particles.vy[p_offset + p] * particles.vy[p_offset + p]);
 	}
 
 	// KE = (1/2)mv^2
@@ -235,7 +233,6 @@ int main(int argc, char *argv[]) {
 	problem_setup();
 	// apply boundary condition (i.e. update pointers on the boundarys to loop periodically)
 	apply_boundary();
-	printf("post apply boundary\n");
 	
 	comp_accel();
 
