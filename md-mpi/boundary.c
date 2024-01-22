@@ -12,8 +12,11 @@
  */
 void apply_boundary() {
 
+	MPI_Barrier(cart_comm);
+	MPI_Barrier(MPI_COMM_WORLD);
+	
 	for (int j = 1; j < sizei+1; j++) {
-		for(int k = 0; k < 2*num_part_per_dim*num_part_per_dim; k++) {
+		for (int k = 0; k < 2*num_part_per_dim*num_part_per_dim; k++) {
 			east_part_ids[((j-1)*2*num_part_per_dim*num_part_per_dim) + k] = cells[sizei][j].part_ids[k];
 			west_part_ids[((j-1)*2*num_part_per_dim*num_part_per_dim) + k] = cells[1][j].part_ids[k];
 		}
@@ -22,17 +25,13 @@ void apply_boundary() {
 	}
 
 	for (int i = 0; i < sizej+2; i++) {
-		for(int k = 0; k < 2*num_part_per_dim*num_part_per_dim; k++) {
+		for (int k = 0; k < 2*num_part_per_dim*num_part_per_dim; k++) {
 			south_part_ids[(i*2*num_part_per_dim*num_part_per_dim) + k] = cells[i][sizej].part_ids[k];
 			north_part_ids[(i*2*num_part_per_dim*num_part_per_dim) + k] = cells[i][1].part_ids[k];
 		}
 		south_counts[i] = cells[i][y].count;
 		north_counts[i] = cells[i][1].count;
 	}
-
-	MPI_Barrier(cart_comm);
-	MPI_Barrier(MPI_COMM_WORLD);
-	
 
 	MPI_Allgather(particles.ax, num_particles_per_proc, MPI_DOUBLE, temp_part_ax, num_particles_per_proc, MPI_DOUBLE, MPI_COMM_WORLD);
 	MPI_Allgather(particles.ay, num_particles_per_proc, MPI_DOUBLE, temp_part_ay, num_particles_per_proc, MPI_DOUBLE, MPI_COMM_WORLD);
