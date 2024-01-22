@@ -11,13 +11,13 @@
  * 
  */
 void apply_boundary() {
-		
-	MPI_Allgather(&particles.ax, num_particles_per_proc, MPI_DOUBLE, particles.ax, num_particles_per_proc, MPI_DOUBLE, cart_comm);
-	MPI_Allgather(&particles.ay, num_particles_per_proc, MPI_DOUBLE, particles.ay, num_particles_per_proc, MPI_DOUBLE, cart_comm);
-	MPI_Allgather(&particles.vx, num_particles_per_proc, MPI_DOUBLE, particles.vx, num_particles_per_proc, MPI_DOUBLE, cart_comm);
-	MPI_Allgather(&particles.vy, num_particles_per_proc, MPI_DOUBLE, particles.vy, num_particles_per_proc, MPI_DOUBLE, cart_comm);
-	MPI_Allgather(&particles.x, num_particles_per_proc, MPI_DOUBLE, particles.x, num_particles_per_proc, MPI_DOUBLE, cart_comm);
-	MPI_Allgather(&particles.y, num_particles_per_proc, MPI_DOUBLE, particles.y, num_particles_per_proc, MPI_DOUBLE, cart_comm);
+
+	MPI_Allgather(&particles.ax, num_particles_per_proc, MPI_DOUBLE, particles.ax, num_particles_per_proc, MPI_DOUBLE, MPI_COMM_WORLD);
+	MPI_Allgather(&particles.ay, num_particles_per_proc, MPI_DOUBLE, particles.ay, num_particles_per_proc, MPI_DOUBLE, MPI_COMM_WORLD);
+	MPI_Allgather(&particles.vx, num_particles_per_proc, MPI_DOUBLE, particles.vx, num_particles_per_proc, MPI_DOUBLE, MPI_COMM_WORLD);
+	MPI_Allgather(&particles.vy, num_particles_per_proc, MPI_DOUBLE, particles.vy, num_particles_per_proc, MPI_DOUBLE, MPI_COMM_WORLD);
+	MPI_Allgather(&particles.x, num_particles_per_proc, MPI_DOUBLE, particles.x, num_particles_per_proc, MPI_DOUBLE, MPI_COMM_WORLD);
+	MPI_Allgather(&particles.y, num_particles_per_proc, MPI_DOUBLE, particles.y, num_particles_per_proc, MPI_DOUBLE, MPI_COMM_WORLD);
 
 	MPI_Sendrecv(&(cells[0][0].part_ids), (sizei+2) * 2 * num_part_per_dim * num_part_per_dim, MPI_INT, north_rank, 1, &(cells[0][sizei].part_ids), (sizei+2) * 2 * num_part_per_dim * num_part_per_dim, MPI_INT, south_rank, 1, cart_comm, MPI_STATUS_IGNORE);
 	MPI_Sendrecv(&(cells[0][0].count), (sizei+2), MPI_INT, north_rank, 1, &(cells[0][sizei].count), (sizei+2), MPI_INT, south_rank, 1, cart_comm, MPI_STATUS_IGNORE);

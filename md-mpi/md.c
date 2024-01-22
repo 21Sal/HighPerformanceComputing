@@ -277,16 +277,18 @@ int main(int argc, char *argv[]) {
 	MPI_Allreduce(MPI_IN_PLACE, &potential_energy, 1, MPI_DOUBLE, MPI_SUM, cart_comm);
 	MPI_Allreduce(MPI_IN_PLACE, &kinetic_energy, 1, MPI_DOUBLE, MPI_SUM, cart_comm);
 	double final_energy = kinetic_energy + potential_energy;
+	
 	if (rank == 0) {
 		printf("Step %8d, Time: %14.8e, Final energy: %14.8e\n", iters, t, final_energy);
 		printf("Simulation complete.\n");
+		// if output is enabled, write the mesh file and the final state
+		if (!no_output) {
+			write_mesh();
+			write_result(iters, t);
+		}
 	}
-	
-	// if output is enabled, write the mesh file and the final state
-	if (!no_output) {
-		write_mesh();
-		write_result(iters, t);
-	}
+
+	MPI_Finalize();	
 
 	return 0;
 }
