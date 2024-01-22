@@ -73,6 +73,9 @@ void apply_boundary() {
 	MPI_Sendrecv(&(cell_count_flat[1*(sizej+2) + 1]), sizej, MPI_INT, west_rank, 0,&(cell_count_flat[(sizej+1)*(sizej+2) + 1]), sizej, MPI_INT, east_rank, 0, cart_comm, MPI_STATUS_IGNORE);
 	// MPI_Sendrecv(&(cells[0][sizej]).size, 1, MPI_INT, west_rank, 0, &(cells[0][0]).size, 1, MPI_INT, east_rank, 0, cart_comm, MPI_STATUS_IGNORE);
 
+	MPI_Barrier(MPI_COMM_WORLD);
+	MPI_Barrier(cart_comm);
+
 	for (int i = 0; i < sizei+2; i++) {
 		for (int j = 0; j < sizej+2; j++) {
 			cells[i][j].count = cell_count_flat[i*(sizej+2) + j];
@@ -81,8 +84,6 @@ void apply_boundary() {
 			}
 		}
 	}
-	MPI_Barrier(MPI_COMM_WORLD);
-	MPI_Barrier(cart_comm);
 
 	for (int p = 0; p < num_particles_total; p++) {
 		particles.ax[p] = temp_part_ax[p];
