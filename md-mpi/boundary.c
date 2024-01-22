@@ -51,11 +51,11 @@ void apply_boundary() {
 
 	MPI_Sendrecv(west_counts, sizei, MPI_INT, west_rank, 1, temp_west_counts, sizei, MPI_INT, east_rank, 1, cart_comm, MPI_STATUS_IGNORE);
 	
-	MPI_Sendrecv(north_part_ids, sizei*2*num_part_per_dim*num_part_per_dim, MPI_INT, north, 1, temp_north_part_ids, sizei*2*num_part_per_dim*num_part_per_dim, 
-				MPI_INT, south, 1, cart_comm, MPI_STATUS_IGNORE);
+	MPI_Sendrecv(north_part_ids, sizei*2*num_part_per_dim*num_part_per_dim, MPI_INT, north_rank, 1, temp_north_part_ids, sizei*2*num_part_per_dim*num_part_per_dim, 
+				MPI_INT, south_rank, 1, cart_comm, MPI_STATUS_IGNORE);
 
-	MPI_Sendrecv(south_part_ids, sizei*2*num_part_per_dim*num_part_per_dim, MPI_INT, south, 1, temp_south_part_ids, sizei*2*num_part_per_dim*num_part_per_dim, 
-				MPI_INT, north, 1, cart_comm, MPI_STATUS_IGNORE);	
+	MPI_Sendrecv(south_part_ids, sizei*2*num_part_per_dim*num_part_per_dim, MPI_INT, south_rank, 1, temp_south_part_ids, sizei*2*num_part_per_dim*num_part_per_dim, 
+				MPI_INT, north_rank, 1, cart_comm, MPI_STATUS_IGNORE);	
 
 	MPI_Sendrecv(north_counts, sizei, MPI_INT, north_rank, 1, temp_north_counts, sizei, MPI_INT, south_rank, 1, cart_comm, MPI_STATUS_IGNORE);
 	
