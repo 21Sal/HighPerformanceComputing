@@ -40,25 +40,25 @@ void apply_boundary() {
 	MPI_Allgather(particles.x, num_particles_per_proc, MPI_DOUBLE, temp_part_x, num_particles_per_proc, MPI_DOUBLE, MPI_COMM_WORLD);
 	MPI_Allgather(particles.y, num_particles_per_proc, MPI_DOUBLE, temp_part_y, num_particles_per_proc, MPI_DOUBLE, MPI_COMM_WORLD);
 
-	MPI_Sendrecv(east_part_ids, sizei*2*num_part_per_dim*num_part_per_dim, MPI_INT, east_rank, 1, temp_east_part_ids, sizei*2*num_part_per_dim*num_part_per_dim, 
+	MPI_Sendrecv(&east_part_ids[0], sizei*2*num_part_per_dim*num_part_per_dim, MPI_INT, east_rank, 1, &temp_east_part_ids[0], sizei*2*num_part_per_dim*num_part_per_dim, 
 				MPI_INT, west_rank, 1, cart_comm, MPI_STATUS_IGNORE);
 	
-	MPI_Sendrecv(west_part_ids, sizei*2*num_part_per_dim*num_part_per_dim, MPI_INT, west_rank, 1, temp_west_part_ids, sizei*2*num_part_per_dim*num_part_per_dim, 
+	MPI_Sendrecv(&west_part_ids[0], sizei*2*num_part_per_dim*num_part_per_dim, MPI_INT, west_rank, 1, &temp_west_part_ids[0], sizei*2*num_part_per_dim*num_part_per_dim, 
 				MPI_INT, east_rank, 1, cart_comm, MPI_STATUS_IGNORE);
 
-	MPI_Sendrecv(east_counts, sizei, MPI_INT, east_rank, 1, temp_east_counts, sizei, MPI_INT, west_rank, 1, cart_comm, MPI_STATUS_IGNORE);
+	MPI_Sendrecv(&east_counts[0], sizei, MPI_INT, east_rank, 1, &temp_east_counts[0], sizei, MPI_INT, west_rank, 1, cart_comm, MPI_STATUS_IGNORE);
 
-	MPI_Sendrecv(west_counts, sizei, MPI_INT, west_rank, 1, temp_west_counts, sizei, MPI_INT, east_rank, 1, cart_comm, MPI_STATUS_IGNORE);
+	MPI_Sendrecv(&west_counts[0], sizei, MPI_INT, west_rank, 1, &temp_west_counts[0], sizei, MPI_INT, east_rank, 1, cart_comm, MPI_STATUS_IGNORE);
 	
-	MPI_Sendrecv(north_part_ids, sizei*2*num_part_per_dim*num_part_per_dim, MPI_INT, north_rank, 1, temp_north_part_ids, sizei*2*num_part_per_dim*num_part_per_dim, 
+	MPI_Sendrecv(&north_part_ids[0], sizei*2*num_part_per_dim*num_part_per_dim, MPI_INT, north_rank, 1, &temp_north_part_ids[0], sizei*2*num_part_per_dim*num_part_per_dim, 
 				MPI_INT, south_rank, 1, cart_comm, MPI_STATUS_IGNORE);
 
-	MPI_Sendrecv(south_part_ids, sizei*2*num_part_per_dim*num_part_per_dim, MPI_INT, south_rank, 1, temp_south_part_ids, sizei*2*num_part_per_dim*num_part_per_dim, 
+	MPI_Sendrecv(&south_part_ids[0], sizei*2*num_part_per_dim*num_part_per_dim, MPI_INT, south_rank, 1, &temp_south_part_ids[0], sizei*2*num_part_per_dim*num_part_per_dim, 
 				MPI_INT, north_rank, 1, cart_comm, MPI_STATUS_IGNORE);	
 
-	MPI_Sendrecv(north_counts, sizei, MPI_INT, north_rank, 1, temp_north_counts, sizei, MPI_INT, south_rank, 1, cart_comm, MPI_STATUS_IGNORE);
+	MPI_Sendrecv(&north_counts[0], sizei, MPI_INT, north_rank, 1, &temp_north_counts[0], sizei, MPI_INT, south_rank, 1, cart_comm, MPI_STATUS_IGNORE);
 	
-	MPI_Sendrecv(south_counts, sizei, MPI_INT, south_rank, 1, temp_south_counts, sizei, MPI_INT, north_rank, 1, cart_comm, MPI_STATUS_IGNORE);
+	MPI_Sendrecv(&south_counts[0], sizei, MPI_INT, south_rank, 1, &temp_south_counts[0], sizei, MPI_INT, north_rank, 1, cart_comm, MPI_STATUS_IGNORE);
 	
 	
 	MPI_Barrier(MPI_COMM_WORLD);
