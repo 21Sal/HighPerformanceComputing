@@ -12,9 +12,6 @@
  */
 void apply_boundary() {
 
-	MPI_Barrier(cart_comm);
-	MPI_Barrier(MPI_COMM_WORLD);
-	
 	for (int j = 1; j < sizei+1; j++) {
 		for (int k = 0; k < 2*num_part_per_dim*num_part_per_dim; k++) {
 			east_part_ids[((j-1)*2*num_part_per_dim*num_part_per_dim) + k] = cells[sizei][j].part_ids[k];
@@ -59,10 +56,6 @@ void apply_boundary() {
 	MPI_Sendrecv(north_counts, sizei, MPI_INT, north_rank, 1, temp_north_counts, sizei, MPI_INT, south_rank, 1, cart_comm, MPI_STATUS_IGNORE);
 	
 	MPI_Sendrecv(south_counts, sizei, MPI_INT, south_rank, 1, temp_south_counts, sizei, MPI_INT, north_rank, 1, cart_comm, MPI_STATUS_IGNORE);
-	
-	
-	MPI_Barrier(MPI_COMM_WORLD);
-	MPI_Barrier(cart_comm);
 
 	for (int p = 0; p < num_particles_total; p++) {
 		particles.ax[p] = temp_part_ax[p];

@@ -9,6 +9,12 @@
 #include "setup.h"
 #include "vtk.h"
 
+struct timeval t;
+
+double get_time() {
+  gettimeofday(&t, NULL);
+  return t.tv_sec + (1e-6 * t.tv_usec);
+}
 
 /**
  * @brief This routine calculates the acceleration felt by each particle based on evaluating the Lennard-Jones 
@@ -223,13 +229,7 @@ int main(int argc, char *argv[]) {
 	// calculated the size of the used portion of the array on each parallel processor
     sizei = y/dims[1];
 	
-	// set up a custom data type that is M doubles in a column.
-    // The gap will be "sizej" (i.e. the size of a row on each processor)
-    MPI_Type_vector(sizej+2, 1, sizei+2, MPI_INT, &mpi_part_ids_column);
-    MPI_Type_vector(sizei+2, 1, sizej+2, MPI_INT, &mpi_count_column);
-
-    MPI_Type_commit(&mpi_part_ids_column);
-    MPI_Type_commit(&mpi_count_column);
+	double time = get_time();
 
 	// set up problem
 	problem_setup();
@@ -288,6 +288,9 @@ int main(int argc, char *argv[]) {
 	if (rank == 0) {
 		printf("Step %8d, Time: %14.8e, Final energy: %14.8e\n", iters, t, final_energy);
 		printf("Simulation complete.\n");
+		
+		time = get_time() - time;
+		printf("Total time: %14.8lf seconds\n", time);
 		// if output is enabled, write the mesh file and the final state
 		if (!no_output) {
 			write_mesh();
