@@ -35,6 +35,9 @@ double comp_accel() {
 				for (int a = -1; a <= 1; a++) {
 					for (int b = -1; b <= 1; b++) {
 						for (int l = 0; l < cells[i+a][j+b].count; l++) {
+							if (l > 2*num_part_per_dim*num_part_per_dim-1){
+								continue;
+							}
 							int q = cells[i+a][j+b].part_ids[l];
 							if (p == q || q > num_particles_total - 1 || q < 0) {
 								continue;
