@@ -45,8 +45,6 @@ void problem_setup() {
 	
 	// Create a grid of cell lists
 	cells = alloc_2d_cell_list_array(sizei+2, sizej+2);
-	cell_part_ids_flat = malloc(sizeof(int)*(sizej+2)*(sizej+2)*2*num_part_per_dim*num_part_per_dim);
-	cell_count_flat = malloc(sizeof(int)*(sizei+2)*(sizej+2));
 
 	num_particles_total = x * y * num_part_per_dim * num_part_per_dim;
 	num_particles_per_proc = num_particles_total / size;
@@ -64,6 +62,27 @@ void problem_setup() {
 	temp_part_ay = malloc(sizeof(double) * num_particles_total);
 	temp_part_vx = malloc(sizeof(double) * num_particles_total);
 	temp_part_vy = malloc(sizeof(double) * num_particles_total);
+
+	east_part_ids = malloc(sizeof(int)*sizei*2*num_part_per_dim*num_part_per_dim);
+	west_part_ids = malloc(sizeof(int)*sizei*2*num_part_per_dim*num_part_per_dim);
+	north_part_ids = malloc(sizeof(int)*(sizej+2)*2*num_part_per_dim*num_part_per_dim);
+	south_part_ids = malloc(sizeof(int)*(sizej+2)*2*num_part_per_dim*num_part_per_dim);
+
+	east_counts = malloc(sizeof(int)*sizei);
+	west_counts = malloc(sizeof(int)*sizei);
+	north_counts = malloc(sizeof(int)*(sizej+2));
+	south_counts = malloc(sizeof(int)*(sizej+2));
+
+	temp_east_part_ids = malloc(sizeof(int)*sizei*2*num_part_per_dim*num_part_per_dim);
+	temp_west_part_ids = malloc(sizeof(int)*sizei*2*num_part_per_dim*num_part_per_dim);
+	temp_north_part_ids = malloc(sizeof(int)*(sizej+2)*2*num_part_per_dim*num_part_per_dim);
+	temp_south_part_ids = malloc(sizeof(int)*(sizej+2)*2*num_part_per_dim*num_part_per_dim);
+
+	temp_east_counts = malloc(sizeof(int)*sizei);
+	temp_west_counts = malloc(sizeof(int)*sizei);
+	temp_north_counts = malloc(sizeof(int)*(sizej+2));
+	temp_south_counts = malloc(sizeof(int)*(sizej+2));
+
 	
 	for (int i = 0; i < sizei+2; i++) {
 		for (int j = 0; j < sizej+2; j++) {

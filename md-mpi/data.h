@@ -56,7 +56,10 @@ extern MPI_Datatype mpi_part_ids_column;
 extern MPI_Datatype mpi_count_column;
 extern MPI_Datatype mpi_cell_t;
 extern int east_rank, west_rank, north_rank, south_rank;
-extern int * cell_part_ids_flat, * cell_count_flat;
+extern int * east_part_ids, * west_part_ids, * north_part_ids, * south_part_ids;
+extern int * east_counts, * west_counts, * north_counts, * south_counts;
+extern int * temp_east_part_ids, * temp_west_part_ids, * temp_north_part_ids, * temp_south_part_ids;
+extern int * temp_east_counts, * temp_west_counts, * temp_north_counts, * temp_south_counts;
 extern double * temp_part_ax, * temp_part_ay, * temp_part_x, * temp_part_y, * temp_part_vx, * temp_part_vy;
 
 
