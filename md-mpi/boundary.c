@@ -32,21 +32,25 @@ void apply_boundary() {
 	south_counts = malloc(sizeof(int)*(sizej+2));
 
 	for (int j = 1; j < sizei+1; j++) {
-		for (int k = 0; k < 2*num_part_per_dim*num_part_per_dim; k++) {
-			east_part_ids[((j-1)*2*num_part_per_dim*num_part_per_dim) + k] = cells[sizei][j].part_ids[k];
-			west_part_ids[((j-1)*2*num_part_per_dim*num_part_per_dim) + k] = cells[1][j].part_ids[k];
-		}
 		east_counts[(j-1)] = cells[sizei][j].count;
 		west_counts[(j-1)] = cells[1][j].count;
+		for (int k = 0; k < cells[sizei][j].count; k++) {
+			east_part_ids[((j-1)*2*num_part_per_dim*num_part_per_dim) + k] = cells[sizei][j].part_ids[k];
+		}
+		for (int k = 0; k < cells[1][j].count; k++) {
+			west_part_ids[((j-1)*2*num_part_per_dim*num_part_per_dim) + k] = cells[1][j].part_ids[k];
+		}
 	}
 
 	for (int i = 0; i < sizej+2; i++) {
-		for (int k = 0; k < 2*num_part_per_dim*num_part_per_dim; k++) {
-			south_part_ids[(i*2*num_part_per_dim*num_part_per_dim) + k] = cells[i][sizej].part_ids[k];
-			north_part_ids[(i*2*num_part_per_dim*num_part_per_dim) + k] = cells[i][1].part_ids[k];
-		}
 		south_counts[i] = cells[i][sizej].count;
 		north_counts[i] = cells[i][1].count;
+		for (int k = 0; k < cells[i][sizej].count; k++) {
+			south_part_ids[(i*2*num_part_per_dim*num_part_per_dim) + k] = cells[i][sizej].part_ids[k];
+		}
+		for (int k = 0; k < cells[i][1].count; k++) {
+			north_part_ids[(i*2*num_part_per_dim*num_part_per_dim) + k] = cells[i][1].part_ids[k];
+		}
 	}
 
 	MPI_Iallgather(particles.ax, num_particles_per_proc, MPI_DOUBLE, temp_part_ax, num_particles_per_proc, MPI_DOUBLE, MPI_COMM_WORLD, &requests[0]);
@@ -88,21 +92,26 @@ void apply_boundary() {
 	}
 
 	for (int j = 1; j < sizei+1; j++) {
-		for (int k = 0; k < 2*num_part_per_dim*num_part_per_dim; k++) {
-			cells[0][j].part_ids[k] = east_part_ids[((j-1)*2*num_part_per_dim*num_part_per_dim) + k];
-			cells[sizei+1][j].part_ids[k] = west_part_ids[((j-1)*2*num_part_per_dim*num_part_per_dim) + k];
-		}
 		cells[0][j].count = east_counts[(j-1)];
-		cells[sizei+1][j].count = west_counts[(j-1)] ;
+		cells[sizei+1][j].count = west_counts[(j-1)];
+
+		for (int k = 0; k < east_counts[(j-1)]; k++) {
+			cells[0][j].part_ids[k] = east_part_ids[((j-1)*2*num_part_per_dim*num_part_per_dim) + k];
+		}
+		for (int k = 0; k < west_counts[(j-1)]; k++) {
+			cells[sizei+1][j].part_ids[k] = west_part_ids[((j-1)*2*num_part_per_dim*num_part_per_dim) + k];
 	}
 
 	for (int i = 0; i < sizej+2; i++) {
-		for (int k = 0; k < 2*num_part_per_dim*num_part_per_dim; k++) {
-			cells[i][0].part_ids[k] = south_part_ids[(i*2*num_part_per_dim*num_part_per_dim) + k];
-			cells[i][sizej+1].part_ids[k] = north_part_ids[(i*2*num_part_per_dim*num_part_per_dim) + k];
-		}
 		cells[i][0].count = south_counts[i];
 		cells[i][sizej+1].count = north_counts[i];
+
+		for (int k = 0; k < south_counts[i]; k++) {
+			cells[i][0].part_ids[k] = south_part_ids[(i*2*num_part_per_dim*num_part_per_dim) + k];
+		}
+		for (int k = 0; k < north_counts[i]; k++) {
+			cells[i][sizej+1].part_ids[k] = north_part_ids[(i*2*num_part_per_dim*num_part_per_dim) + k];
+		}
 	}
 
 	free(temp_part_x);
