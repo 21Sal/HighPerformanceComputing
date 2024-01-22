@@ -100,6 +100,7 @@ void apply_boundary() {
 		}
 		for (int k = 0; k < west_counts[(j-1)]; k++) {
 			cells[sizei+1][j].part_ids[k] = west_part_ids[((j-1)*2*num_part_per_dim*num_part_per_dim) + k];
+		}
 	}
 
 	for (int i = 0; i < sizej+2; i++) {
