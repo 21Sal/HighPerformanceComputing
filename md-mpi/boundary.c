@@ -12,7 +12,7 @@
  * 
  */
 void apply_boundary() {
-	MPI_Request &requests[10];
+	MPI_Request requests[10];
 
 	temp_part_x = malloc(sizeof(double) * num_particles_total);
 	temp_part_y = malloc(sizeof(double) * num_particles_total);
@@ -49,12 +49,12 @@ void apply_boundary() {
 		north_counts[i] = cells[i][1].count;
 	}
 
-	MPI_IAllgather(particles.ax, num_particles_per_proc, MPI_DOUBLE, temp_part_ax, num_particles_per_proc, MPI_DOUBLE, MPI_COMM_WORLD, &requests[0]);
-	MPI_IAllgather(particles.ay, num_particles_per_proc, MPI_DOUBLE, temp_part_ay, num_particles_per_proc, MPI_DOUBLE, MPI_COMM_WORLD, &requests[1]);
-	MPI_IAllgather(particles.vx, num_particles_per_proc, MPI_DOUBLE, temp_part_vx, num_particles_per_proc, MPI_DOUBLE, MPI_COMM_WORLD, &requests[2]);
-	MPI_IAllgather(particles.vy, num_particles_per_proc, MPI_DOUBLE, temp_part_vy, num_particles_per_proc, MPI_DOUBLE, MPI_COMM_WORLD, &requests[3]);
-	MPI_IAllgather(particles.x, num_particles_per_proc, MPI_DOUBLE, temp_part_x, num_particles_per_proc, MPI_DOUBLE, MPI_COMM_WORLD, &requests[4]);
-	MPI_IAllgather(particles.y, num_particles_per_proc, MPI_DOUBLE, temp_part_y, num_particles_per_proc, MPI_DOUBLE, MPI_COMM_WORLD, &requests[5]);
+	MPI_Iallgather(particles.ax, num_particles_per_proc, MPI_DOUBLE, temp_part_ax, num_particles_per_proc, MPI_DOUBLE, MPI_COMM_WORLD, &requests[0]);
+	MPI_Iallgather(particles.ay, num_particles_per_proc, MPI_DOUBLE, temp_part_ay, num_particles_per_proc, MPI_DOUBLE, MPI_COMM_WORLD, &requests[1]);
+	MPI_Iallgather(particles.vx, num_particles_per_proc, MPI_DOUBLE, temp_part_vx, num_particles_per_proc, MPI_DOUBLE, MPI_COMM_WORLD, &requests[2]);
+	MPI_Iallgather(particles.vy, num_particles_per_proc, MPI_DOUBLE, temp_part_vy, num_particles_per_proc, MPI_DOUBLE, MPI_COMM_WORLD, &requests[3]);
+	MPI_Iallgather(particles.x, num_particles_per_proc, MPI_DOUBLE, temp_part_x, num_particles_per_proc, MPI_DOUBLE, MPI_COMM_WORLD, &requests[4]);
+	MPI_Iallgather(particles.y, num_particles_per_proc, MPI_DOUBLE, temp_part_y, num_particles_per_proc, MPI_DOUBLE, MPI_COMM_WORLD, &requests[5]);
 
 	MPI_Sendrecv_replace(east_part_ids, sizei*2*num_part_per_dim*num_part_per_dim, MPI_INT, east_rank, 1, 
 						west_rank, 1, cart_comm, MPI_STATUS_IGNORE);
