@@ -230,7 +230,10 @@ int main(int argc, char *argv[]) {
 	// set up problem
 	problem_setup();
 	// apply boundary condition (i.e. update pointers on the boundarys to loop periodically)
+	printf("n %d\n", num_particles_per_proc);
+	printf("before boundary\n");
 	apply_boundary();
+	printf("after boundary\n");
 	
 	comp_accel();
 

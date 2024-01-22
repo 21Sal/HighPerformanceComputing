@@ -58,6 +58,13 @@ void problem_setup() {
 	particles.vx = malloc(sizeof(double) * num_particles_total);
 	particles.vy = malloc(sizeof(double) * num_particles_total);
 	
+	temp_part_x = malloc(sizeof(double) * num_particles_total);
+	temp_part_y = malloc(sizeof(double) * num_particles_total);
+	temp_part_ax = malloc(sizeof(double) * num_particles_total);
+	temp_part_ay = malloc(sizeof(double) * num_particles_total);
+	temp_part_vx = malloc(sizeof(double) * num_particles_total);
+	temp_part_vy = malloc(sizeof(double) * num_particles_total);
+	
 	for (int i = 0; i < sizei+2; i++) {
 		for (int j = 0; j < sizej+2; j++) {
 			cells[i][j].count = 0;

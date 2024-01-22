@@ -57,6 +57,8 @@ MPI_Datatype mpi_count_column;
 MPI_Datatype mpi_cell_t;
 int * cell_part_ids_flat, * cell_count_flat;
 int east_rank, west_rank, north_rank, south_rank;
+double * temp_part_ax, * temp_part_ay, * temp_part_x, * temp_part_y, * temp_part_vx, * temp_part_vy;
+
 /**
  * @brief Add a particle to a particular cell list
  * 
