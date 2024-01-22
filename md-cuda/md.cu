@@ -205,12 +205,12 @@ __global__ void cuda_update_velocity(int num_particles, double * d_kinetic_arr, 
 	int p = blockIdx.x * blockDim.x + threadIdx.x;
 
 	if (p < num_particles) {
-			// update velocity again by half time to obtain v(t + Dt)
-			d_part_vx[p] += dth * d_part_ax[p];
-			d_part_vy[p] += dth * d_part_ay[p];
+		// update velocity again by half time to obtain v(t + Dt)
+		d_part_vx[p] += dth * d_part_ax[p];
+		d_part_vy[p] += dth * d_part_ay[p];
 
-			// calculate the kinetic energy by adding up the squares of the velocities in each dim
-			d_kinetic_arr[p] = (d_part_vx[p] * d_part_vx[p]) + (d_part_vy[p] * d_part_vy[p]);
+		// calculate the kinetic energy by adding up the squares of the velocities in each dim
+		d_kinetic_arr[p] = (d_part_vx[p] * d_part_vx[p]) + (d_part_vy[p] * d_part_vy[p]);
 	}
 }
 
