@@ -65,6 +65,7 @@ int east_rank, west_rank, north_rank, south_rank;
  */
 void add_particle(struct cell_list * cell, int part_id) {
 	if (cell->count == cell->size) {
+		printf("reallocating memory\n");
 		cell->size *= growth_factor;
 		int * tmp = realloc(cell->part_ids, sizeof(int) * cell->size);
 		if (!tmp) {
