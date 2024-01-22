@@ -44,6 +44,7 @@ double comp_accel() {
 
 							// since particles are stored relative to their cell, calculate the
 							// actual x and y coordinates.
+							// printf("k %d count %d\n", k, cells[i][j].count);
 							double p_real_x = ((i-1) * cell_size) + particles.x[p];
 							double p_real_y = ((j-1) * cell_size) + particles.y[p];
 							double q_real_x = ((i+a-1) * cell_size) + particles.x[q];
@@ -205,7 +206,7 @@ int main(int argc, char *argv[]) {
 	// Set default parameters
 	set_defaults();
 	// parse the arguments
-	if (rank == 0) parse_args(argc, argv);
+	parse_args(argc, argv);
 	// call set up to update defaults
 	setup();
 
@@ -230,10 +231,10 @@ int main(int argc, char *argv[]) {
 	// set up problem
 	problem_setup();
 	// apply boundary condition (i.e. update pointers on the boundarys to loop periodically)
-	printf("n %d\n", num_particles_per_proc);
-	printf("before boundary\n");
+	// printf("n %d\n", num_particles_per_proc);
+	// printf("before boundary\n");
 	apply_boundary();
-	printf("after boundary\n");
+	// printf("after boundary\n");
 	
 	comp_accel();
 

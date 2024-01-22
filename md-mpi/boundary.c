@@ -13,20 +13,16 @@
  */
 void apply_boundary() {
 
+	MPI_Barrier(cart_comm);
+	MPI_Barrier(MPI_COMM_WORLD);
+
 	MPI_Allgather(particles.ax, num_particles_per_proc, MPI_DOUBLE, temp_part_ax, num_particles_per_proc, MPI_DOUBLE, MPI_COMM_WORLD);
 	MPI_Allgather(particles.ay, num_particles_per_proc, MPI_DOUBLE, temp_part_ay, num_particles_per_proc, MPI_DOUBLE, MPI_COMM_WORLD);
 	MPI_Allgather(particles.vx, num_particles_per_proc, MPI_DOUBLE, temp_part_vx, num_particles_per_proc, MPI_DOUBLE, MPI_COMM_WORLD);
 	MPI_Allgather(particles.vy, num_particles_per_proc, MPI_DOUBLE, temp_part_vy, num_particles_per_proc, MPI_DOUBLE, MPI_COMM_WORLD);
 	MPI_Allgather(particles.x, num_particles_per_proc, MPI_DOUBLE, temp_part_x, num_particles_per_proc, MPI_DOUBLE, MPI_COMM_WORLD);
 	MPI_Allgather(particles.y, num_particles_per_proc, MPI_DOUBLE, temp_part_y, num_particles_per_proc, MPI_DOUBLE, MPI_COMM_WORLD);
-
-	MPI_Sendrecv(&(cells[0][0].part_ids), (sizei+2) * 2 * num_part_per_dim * num_part_per_dim, MPI_INT, north_rank, 1, &(cells[0][sizei].part_ids), (sizei+2) * 2 * num_part_per_dim * num_part_per_dim, MPI_INT, south_rank, 1, cart_comm, MPI_STATUS_IGNORE);
-	MPI_Sendrecv(&(cells[0][0].count), (sizei+2), MPI_INT, north_rank, 1, &(cells[0][sizei].count), (sizei+2), MPI_INT, south_rank, 1, cart_comm, MPI_STATUS_IGNORE);
-	// MPI_Sendrecv(&(cells[1][0]).size, sizei, MPI_INT, north_rank, 1, &(cells[sizej+1][0]).size, sizei, MPI_INT, south_rank, 1, cart_comm, MPI_STATUS_IGNORE);
-
-	MPI_Sendrecv(&(cells[0][sizei+1].part_ids), (sizei+2) * 2 * num_part_per_dim * num_part_per_dim, MPI_INT, north_rank, 1, &(cells[0][sizei+1].part_ids), (sizei+2) * 2 * num_part_per_dim * num_part_per_dim, MPI_INT, south_rank, 1, cart_comm, MPI_STATUS_IGNORE);
-	MPI_Sendrecv(&(cells[0][sizei+1].count), (sizei+2), MPI_INT, north_rank, 1, &(cells[0][sizei+1].count), (sizei+2), MPI_INT, south_rank, 1, cart_comm, MPI_STATUS_IGNORE);
-
+	
 	for (int i = 0; i < sizei+2; i++) {
 		for (int j = 0; j < sizej+2; j++) {
 			cell_count_flat[i*(sizej+2) + j] = cells[i][j].count;
@@ -35,6 +31,15 @@ void apply_boundary() {
 			}
 		}
 	}
+	
+	MPI_Sendrecv(&(cells[0][0].part_ids), (sizei+2) * 2 * num_part_per_dim * num_part_per_dim, MPI_INT, north_rank, 1, &(cells[0][sizei].part_ids), (sizei+2) * 2 * num_part_per_dim * num_part_per_dim, MPI_INT, south_rank, 1, cart_comm, MPI_STATUS_IGNORE);
+	MPI_Sendrecv(&(cells[0][0].count), (sizei+2), MPI_INT, north_rank, 1, &(cells[0][sizei].count), (sizei+2), MPI_INT, south_rank, 1, cart_comm, MPI_STATUS_IGNORE);
+	// MPI_Sendrecv(&(cells[1][0]).size, sizei, MPI_INT, north_rank, 1, &(cells[sizej+1][0]).size, sizei, MPI_INT, south_rank, 1, cart_comm, MPI_STATUS_IGNORE);
+
+	MPI_Sendrecv(&(cells[0][sizei+1].part_ids), (sizei+2) * 2 * num_part_per_dim * num_part_per_dim, MPI_INT, north_rank, 1, &(cells[0][sizei+1].part_ids), (sizei+2) * 2 * num_part_per_dim * num_part_per_dim, MPI_INT, south_rank, 1, cart_comm, MPI_STATUS_IGNORE);
+	MPI_Sendrecv(&(cells[0][sizei+1].count), (sizei+2), MPI_INT, north_rank, 1, &(cells[0][sizei+1].count), (sizei+2), MPI_INT, south_rank, 1, cart_comm, MPI_STATUS_IGNORE);
+
+	
 
 
 	// Apply boundary conditions
@@ -56,17 +61,28 @@ void apply_boundary() {
 			}
 		}
 	}
+	MPI_Barrier(MPI_COMM_WORLD);
+
+	for (int p = 0; p < num_particles_total; p++) {
+		particles.ax[p] = temp_part_ax[p];
+		particles.ay[p] = temp_part_ay[p];
+		particles.vx[p] = temp_part_vx[p];
+		particles.vy[p] = temp_part_vy[p];
+		particles.x[p] = temp_part_x[p];
+		particles.y[p] = temp_part_y[p];
+	}
+
+	// memcpy(particles.ax, temp_part_ax, num_particles_per_proc*sizeof(double));
+	// smemcpy(particles.ay, temp_part_ay, num_particles_per_proc*sizeof(double));
+	// memcpy(particles.vx, temp_part_vx, num_particles_per_proc*sizeof(double));
+	// memcpy(particles.vy, temp_part_vy, num_particles_per_proc*sizeof(double));
+	// memcpy(particles.x, temp_part_x, num_particles_per_proc*sizeof(double));
+	// memcpy(particles.y, temp_part_y, num_particles_per_proc*sizeof(double));
 
 	MPI_Barrier(cart_comm);
 
 
-	memcpy(particles.ax, temp_part_ax, num_particles_per_proc*sizeof(double));
-	memcpy(particles.ay, temp_part_ay, num_particles_per_proc*sizeof(double));
-	memcpy(particles.vx, temp_part_vx, num_particles_per_proc*sizeof(double));
-	memcpy(particles.vy, temp_part_vy, num_particles_per_proc*sizeof(double));
-	memcpy(particles.x, temp_part_x, num_particles_per_proc*sizeof(double));
-	memcpy(particles.y, temp_part_y, num_particles_per_proc*sizeof(double));
-
+	
 	
 	// MPI_Sendrecv(&(cells[sizei][1]).size, sizei, MPI_INT, north_rank, 1, &(cells[1][0]).size, sizei, MPI_INT, south_rank, 1, cart_comm, MPI_STATUS_IGNORE);
 	
