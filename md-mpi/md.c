@@ -36,7 +36,7 @@ double comp_accel() {
 					for (int b = -1; b <= 1; b++) {
 						for (int l = 0; l < cells[i+a][j+b].count; l++) {
 							int q = cells[i+a][j+b].part_ids[l];
-							if (p == q) {
+							if (p == q || q > num_particles_total - 1) {
 								continue;
 							}
 							// printf("in comp_accel");

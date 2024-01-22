@@ -29,7 +29,7 @@ void apply_boundary() {
 			south_part_ids[(i*2*num_part_per_dim*num_part_per_dim) + k] = cells[i][sizej].part_ids[k];
 			north_part_ids[(i*2*num_part_per_dim*num_part_per_dim) + k] = cells[i][1].part_ids[k];
 		}
-		south_counts[i] = cells[i][y].count;
+		south_counts[i] = cells[i][sizej].count;
 		north_counts[i] = cells[i][1].count;
 	}
 
