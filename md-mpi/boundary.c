@@ -33,12 +33,12 @@ void apply_boundary() {
 		north_counts[i] = cells[i][1].count;
 	}
 
-	MPI_Allgather(particles.ax, num_particles_per_proc, MPI_DOUBLE, temp_part_ax, num_particles_per_proc, MPI_DOUBLE, MPI_COMM_WORLD);
-	MPI_Allgather(particles.ay, num_particles_per_proc, MPI_DOUBLE, temp_part_ay, num_particles_per_proc, MPI_DOUBLE, MPI_COMM_WORLD);
-	MPI_Allgather(particles.vx, num_particles_per_proc, MPI_DOUBLE, temp_part_vx, num_particles_per_proc, MPI_DOUBLE, MPI_COMM_WORLD);
-	MPI_Allgather(particles.vy, num_particles_per_proc, MPI_DOUBLE, temp_part_vy, num_particles_per_proc, MPI_DOUBLE, MPI_COMM_WORLD);
-	MPI_Allgather(particles.x, num_particles_per_proc, MPI_DOUBLE, temp_part_x, num_particles_per_proc, MPI_DOUBLE, MPI_COMM_WORLD);
-	MPI_Allgather(particles.y, num_particles_per_proc, MPI_DOUBLE, temp_part_y, num_particles_per_proc, MPI_DOUBLE, MPI_COMM_WORLD);
+	MPI_Allgather(&particles.ax[0], num_particles_per_proc, MPI_DOUBLE, &temp_part_ax[0], num_particles_per_proc, MPI_DOUBLE, MPI_COMM_WORLD);
+	MPI_Allgather(&particles.ay[0], num_particles_per_proc, MPI_DOUBLE, &temp_part_ay[0], num_particles_per_proc, MPI_DOUBLE, MPI_COMM_WORLD);
+	MPI_Allgather(&particles.vx[0], num_particles_per_proc, MPI_DOUBLE, &temp_part_vx[0], num_particles_per_proc, MPI_DOUBLE, MPI_COMM_WORLD);
+	MPI_Allgather(&particles.vy[0], num_particles_per_proc, MPI_DOUBLE, &temp_part_vy[0], num_particles_per_proc, MPI_DOUBLE, MPI_COMM_WORLD);
+	MPI_Allgather(&particles.x[0], num_particles_per_proc, MPI_DOUBLE, &temp_part_x[0], num_particles_per_proc, MPI_DOUBLE, MPI_COMM_WORLD);
+	MPI_Allgather(&particles.y[0], num_particles_per_proc, MPI_DOUBLE, &temp_part_y[0], num_particles_per_proc, MPI_DOUBLE, MPI_COMM_WORLD);
 
 	MPI_Sendrecv(&east_part_ids[0], sizei*2*num_part_per_dim*num_part_per_dim, MPI_INT, east_rank, 1, &temp_east_part_ids[0], sizei*2*num_part_per_dim*num_part_per_dim, 
 				MPI_INT, west_rank, 1, cart_comm, MPI_STATUS_IGNORE);
