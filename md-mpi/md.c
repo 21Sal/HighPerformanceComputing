@@ -202,7 +202,15 @@ int main(int argc, char *argv[]) {
    	MPI_Cart_shift(cart_comm, 1, 1, &south_rank, &north_rank);
 
 
+	// Set default parameters
+	set_defaults();
+	// parse the arguments
+	if (rank == 0) parse_args(argc, argv);
+	// call set up to update defaults
+	setup();
 
+	if (rank == 0 && verbose) print_opts();
+	
 	// calculate the start and end indicies for parallel processors
 
 	// calculated the size of the used portion of the array on each parallel processor
@@ -219,16 +227,6 @@ int main(int argc, char *argv[]) {
     MPI_Type_commit(&mpi_part_ids_column);
     MPI_Type_commit(&mpi_count_column);
 
-
-	// Set default parameters
-	set_defaults();
-	// parse the arguments
-	if (rank == 0) parse_args(argc, argv);
-	// call set up to update defaults
-	setup();
-
-	if (rank == 0 && verbose) print_opts();
-	
 	// set up problem
 	problem_setup();
 	// apply boundary condition (i.e. update pointers on the boundarys to loop periodically)
