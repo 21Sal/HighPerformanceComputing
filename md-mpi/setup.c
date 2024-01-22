@@ -48,9 +48,9 @@ void problem_setup() {
 	cell_part_ids_flat = malloc(sizeof(int)*(sizej+2)*(sizej+2)*2*num_part_per_dim*num_part_per_dim);
 	cell_count_flat = malloc(sizeof(int)*(sizei+2)*(sizej+2));
 
-	num_particles_per_proc = sizej * sizei * num_part_per_dim * num_part_per_dim;
 	num_particles_total = x * y * num_part_per_dim * num_part_per_dim;
-
+	num_particles_per_proc = num_particles_total / size;
+	
 	particles.x = malloc(sizeof(double) * num_particles_total);
 	particles.y = malloc(sizeof(double) * num_particles_total);
 	particles.ax = malloc(sizeof(double) * num_particles_total);

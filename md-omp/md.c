@@ -119,7 +119,6 @@ void move_particles() {
  */
 void update_cells() {
 	// move particles that need to move cell lists
-	#pragma omp parallel for
 	for (int i = 1; i < x+1; i++) {
 		for (int j = 1; j < y+1; j++) {
 			// we have to store the next particle here, as the remove/add at the end may be destructive
