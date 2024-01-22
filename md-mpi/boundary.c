@@ -11,6 +11,32 @@
  * 
  */
 void apply_boundary() {
+	temp_part_x = malloc(sizeof(double) * num_particles_total);
+	temp_part_y = malloc(sizeof(double) * num_particles_total);
+	temp_part_ax = malloc(sizeof(double) * num_particles_total);
+	temp_part_ay = malloc(sizeof(double) * num_particles_total);
+	temp_part_vx = malloc(sizeof(double) * num_particles_total);
+	temp_part_vy = malloc(sizeof(double) * num_particles_total);
+
+	east_part_ids = malloc(sizeof(int)*sizei*2*num_part_per_dim*num_part_per_dim);
+	west_part_ids = malloc(sizeof(int)*sizei*2*num_part_per_dim*num_part_per_dim);
+	north_part_ids = malloc(sizeof(int)*(sizej+2)*2*num_part_per_dim*num_part_per_dim);
+	south_part_ids = malloc(sizeof(int)*(sizej+2)*2*num_part_per_dim*num_part_per_dim);
+
+	east_counts = malloc(sizeof(int)*sizei);
+	west_counts = malloc(sizeof(int)*sizei);
+	north_counts = malloc(sizeof(int)*(sizej+2));
+	south_counts = malloc(sizeof(int)*(sizej+2));
+
+	temp_east_part_ids = malloc(sizeof(int)*sizei*2*num_part_per_dim*num_part_per_dim);
+	temp_west_part_ids = malloc(sizeof(int)*sizei*2*num_part_per_dim*num_part_per_dim);
+	temp_north_part_ids = malloc(sizeof(int)*(sizej+2)*2*num_part_per_dim*num_part_per_dim);
+	temp_south_part_ids = malloc(sizeof(int)*(sizej+2)*2*num_part_per_dim*num_part_per_dim);
+
+	temp_east_counts = malloc(sizeof(int)*sizei);
+	temp_west_counts = malloc(sizeof(int)*sizei);
+	temp_north_counts = malloc(sizeof(int)*(sizej+2));
+	temp_south_counts = malloc(sizeof(int)*(sizej+2));
 
 	for (int j = 1; j < sizei+1; j++) {
 		for (int k = 0; k < 2*num_part_per_dim*num_part_per_dim; k++) {
@@ -83,4 +109,31 @@ void apply_boundary() {
 		cells[i][0].count = temp_south_counts[i];
 		cells[i][sizej+1].count = temp_north_counts[i];
 	}
+
+	free(temp_part_x);
+	free(temp_part_y);
+	free(temp_part_ax);
+	free(temp_part_ay);
+	free(temp_part_vx);
+	free(temp_part_vy);
+
+	free(east_part_ids);
+	free(west_part_ids);
+	free(north_part_ids);
+	free(south_part_ids);
+
+	free(east_counts);
+	free(west_counts);
+	free(north_counts);
+	free(south_counts);
+
+	free(temp_east_part_ids);
+	free(temp_west_part_ids);
+	free(temp_north_part_ids);
+	free(temp_south_part_ids);
+
+	free(temp_east_counts);
+	free(temp_west_counts);
+	free(temp_north_counts);
+	free(temp_south_counts);
 }

@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <time.h>
+#include <sys/time.h>
 
 #include "args.h"
 #include "boundary.h"
@@ -288,7 +289,7 @@ int main(int argc, char *argv[]) {
 	if (rank == 0) {
 		printf("Step %8d, Time: %14.8e, Final energy: %14.8e\n", iters, t, final_energy);
 		printf("Simulation complete.\n");
-		
+
 		time = get_time() - time;
 		printf("Total time: %14.8lf seconds\n", time);
 		// if output is enabled, write the mesh file and the final state

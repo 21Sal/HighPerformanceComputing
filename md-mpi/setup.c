@@ -56,32 +56,7 @@ void problem_setup() {
 	particles.vx = malloc(sizeof(double) * num_particles_total);
 	particles.vy = malloc(sizeof(double) * num_particles_total);
 	
-	temp_part_x = malloc(sizeof(double) * num_particles_total);
-	temp_part_y = malloc(sizeof(double) * num_particles_total);
-	temp_part_ax = malloc(sizeof(double) * num_particles_total);
-	temp_part_ay = malloc(sizeof(double) * num_particles_total);
-	temp_part_vx = malloc(sizeof(double) * num_particles_total);
-	temp_part_vy = malloc(sizeof(double) * num_particles_total);
-
-	east_part_ids = malloc(sizeof(int)*sizei*2*num_part_per_dim*num_part_per_dim);
-	west_part_ids = malloc(sizeof(int)*sizei*2*num_part_per_dim*num_part_per_dim);
-	north_part_ids = malloc(sizeof(int)*(sizej+2)*2*num_part_per_dim*num_part_per_dim);
-	south_part_ids = malloc(sizeof(int)*(sizej+2)*2*num_part_per_dim*num_part_per_dim);
-
-	east_counts = malloc(sizeof(int)*sizei);
-	west_counts = malloc(sizeof(int)*sizei);
-	north_counts = malloc(sizeof(int)*(sizej+2));
-	south_counts = malloc(sizeof(int)*(sizej+2));
-
-	temp_east_part_ids = malloc(sizeof(int)*sizei*2*num_part_per_dim*num_part_per_dim);
-	temp_west_part_ids = malloc(sizeof(int)*sizei*2*num_part_per_dim*num_part_per_dim);
-	temp_north_part_ids = malloc(sizeof(int)*(sizej+2)*2*num_part_per_dim*num_part_per_dim);
-	temp_south_part_ids = malloc(sizeof(int)*(sizej+2)*2*num_part_per_dim*num_part_per_dim);
-
-	temp_east_counts = malloc(sizeof(int)*sizei);
-	temp_west_counts = malloc(sizeof(int)*sizei);
-	temp_north_counts = malloc(sizeof(int)*(sizej+2));
-	temp_south_counts = malloc(sizeof(int)*(sizej+2));
+	
 
 	
 	for (int i = 0; i < sizei+2; i++) {
