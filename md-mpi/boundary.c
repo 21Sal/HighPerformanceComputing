@@ -32,18 +32,18 @@ void apply_boundary() {
 	// }
 
 	for (int j = 1; j < y+1; j++) {
-		MPI_Sendrecv(&(cells[x][j].part_ids[0]), 2*num_part_per_dim*num_part_per_dim, MPI_INT, east_rank, 1, &(cells[0][j].part_ids[0]), 2*num_part_per_dim*num_part_per_dim, MPI_INT, west_rank, 1, cart_comm, MPI_STATUS_IGNORE);
+		MPI_Sendrecv(cells[x][j].part_ids), 2*num_part_per_dim*num_part_per_dim, MPI_INT, east_rank, 1, cells[0][j].part_ids[0], 2*num_part_per_dim*num_part_per_dim, MPI_INT, west_rank, 1, cart_comm, MPI_STATUS_IGNORE);
 		MPI_Sendrecv(&(cells[x][j].count), 1, MPI_INT, east_rank, 1, &(cells[0][j].count), 1, MPI_INT, west_rank, 1, cart_comm, MPI_STATUS_IGNORE);
 		
-		MPI_Sendrecv(&(cells[1][j].part_ids[0]), 2*num_part_per_dim*num_part_per_dim, MPI_INT, west_rank, 1, &(cells[1][j].part_ids[0]), 2*num_part_per_dim*num_part_per_dim, MPI_INT, east_rank, 1, cart_comm, MPI_STATUS_IGNORE);
+		MPI_Sendrecv(cells[1][j].part_ids, 2*num_part_per_dim*num_part_per_dim, MPI_INT, west_rank, 1, cells[1][j].part_ids, 2*num_part_per_dim*num_part_per_dim, MPI_INT, east_rank, 1, cart_comm, MPI_STATUS_IGNORE);
 		MPI_Sendrecv(&(cells[1][j].count), 1, MPI_INT, west_rank, 1, &(cells[1][j].count), 1, MPI_INT, east_rank, 1, cart_comm, MPI_STATUS_IGNORE);
 	}
 
 	for (int i = 0; i < x+2; i++) {
-		MPI_Sendrecv(&(cells[i][y].part_ids[0]), 2*num_part_per_dim*num_part_per_dim, MPI_INT, south_rank, 1, &(cells[i][0].part_ids[0]), 2*num_part_per_dim*num_part_per_dim, MPI_INT, north_rank, 1, cart_comm, MPI_STATUS_IGNORE);
-		MPI_Sendrecv(&(cells[i][y].part_ids[0]), 1, MPI_INT, south_rank, 1, &(cells[i][0].count), 1, MPI_INT, north_rank, 1, cart_comm, MPI_STATUS_IGNORE);
+		MPI_Sendrecv(cells[i][y].part_ids, 2*num_part_per_dim*num_part_per_dim, MPI_INT, south_rank, 1, cells[i][0].part_ids, 2*num_part_per_dim*num_part_per_dim, MPI_INT, north_rank, 1, cart_comm, MPI_STATUS_IGNORE);
+		MPI_Sendrecv(&(cells[i][y].count), 1, MPI_INT, south_rank, 1, &(cells[i][0].count), 1, MPI_INT, north_rank, 1, cart_comm, MPI_STATUS_IGNORE);
 
-		MPI_Sendrecv(&(cells[i][1].part_ids[0]), 2*num_part_per_dim*num_part_per_dim, MPI_INT, north_rank, 1, &(cells[i][y+1].part_ids[0]), 2*num_part_per_dim*num_part_per_dim, MPI_INT, south_rank, 1, cart_comm, MPI_STATUS_IGNORE);
+		MPI_Sendrecv(cells[i][1].part_ids, 2*num_part_per_dim*num_part_per_dim, MPI_INT, north_rank, 1, cells[i][y+1].part_ids, 2*num_part_per_dim*num_part_per_dim, MPI_INT, south_rank, 1, cart_comm, MPI_STATUS_IGNORE);
 		MPI_Sendrecv(&(cells[i][1].count), 1, MPI_INT, north_rank, 1, &(cells[i][y+1].count), 1, MPI_INT, south_rank, 1, cart_comm, MPI_STATUS_IGNORE);
 	}
 	
