@@ -56,25 +56,25 @@ void apply_boundary() {
 	MPI_IAllgather(particles.x, num_particles_per_proc, MPI_DOUBLE, temp_part_x, num_particles_per_proc, MPI_DOUBLE, MPI_COMM_WORLD, &requests[4]);
 	MPI_IAllgather(particles.y, num_particles_per_proc, MPI_DOUBLE, temp_part_y, num_particles_per_proc, MPI_DOUBLE, MPI_COMM_WORLD, &requests[5]);
 
-	MPI_Sendrecv_replace(east_part_ids, sizei*2*num_part_per_dim*num_part_per_dim, MPI_INT, east_rank, 1, east_part_ids, 
+	MPI_Sendrecv_replace(east_part_ids, sizei*2*num_part_per_dim*num_part_per_dim, MPI_INT, east_rank, 1, 
 						west_rank, 1, cart_comm, MPI_STATUS_IGNORE);
 	
-	MPI_Sendrecv_replace(west_part_ids, sizei*2*num_part_per_dim*num_part_per_dim, MPI_INT, west_rank, 1, west_part_ids, 
+	MPI_Sendrecv_replace(west_part_ids, sizei*2*num_part_per_dim*num_part_per_dim, MPI_INT, west_rank, 1, 
 						east_rank, 1, cart_comm, MPI_STATUS_IGNORE);
 
-	MPI_Sendrecv_replace(east_counts, sizei, MPI_INT, east_rank, 1, east_counts, west_rank, 1, cart_comm, MPI_STATUS_IGNORE);
+	MPI_Sendrecv_replace(east_counts, sizei, MPI_INT, east_rank, 1, west_rank, 1, cart_comm, MPI_STATUS_IGNORE);
 
-	MPI_Sendrecv_replace(west_counts, sizei, MPI_INT, west_rank, 1, west_counts, east_rank, 1, cart_comm, MPI_STATUS_IGNORE);
+	MPI_Sendrecv_replace(west_counts, sizei, MPI_INT, west_rank, 1, east_rank, 1, cart_comm, MPI_STATUS_IGNORE);
 	
-	MPI_Sendrecv_replace(north_part_ids, sizei*2*num_part_per_dim*num_part_per_dim, MPI_INT, north_rank, 1, north_part_ids,
+	MPI_Sendrecv_replace(north_part_ids, sizei*2*num_part_per_dim*num_part_per_dim, MPI_INT, north_rank, 1,
 						south_rank, 1, cart_comm, MPI_STATUS_IGNORE);
 
-	MPI_Sendrecv_replace(south_part_ids, sizei*2*num_part_per_dim*num_part_per_dim, MPI_INT, south_rank, 1, south_part_ids,
+	MPI_Sendrecv_replace(south_part_ids, sizei*2*num_part_per_dim*num_part_per_dim, MPI_INT, south_rank, 1,
 						north_rank, 1, cart_comm, MPI_STATUS_IGNORE);	
 
-	MPI_Sendrecv_replace(north_counts, sizei, MPI_INT, north_rank, 1, north_counts, south_rank, 1, cart_comm, MPI_STATUS_IGNORE);
+	MPI_Sendrecv_replace(north_counts, sizei, MPI_INT, north_rank, 1, south_rank, 1, cart_comm, MPI_STATUS_IGNORE);
 	
-	MPI_Sendrecv_replace(south_counts, sizei, MPI_INT, south_rank, 1, south_counts, north_rank, 1, cart_comm, MPI_STATUS_IGNORE);
+	MPI_Sendrecv_replace(south_counts, sizei, MPI_INT, south_rank, 1, north_rank, 1, cart_comm, MPI_STATUS_IGNORE);
 
 	MPI_Waitall(6, requests, MPI_STATUS_IGNORE);
 
